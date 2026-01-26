@@ -3,6 +3,7 @@ import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { JWT } from 'google-auth-library';
 import { createRequire } from 'module';
 
+// Esto permite seguir leyendo el JSON de credenciales en modo ESM
 const require = createRequire(import.meta.url);
 const keys = require('./google-auth.json');
 
@@ -18,7 +19,7 @@ const serviceAccountAuth = new JWT({
 });
 
 // REEMPLAZA ESTE ID CON EL TUYO REAL
-const doc = new GoogleSpreadsheet('TU_ID_DE_HOJA_AQUÍ', serviceAccountAuth);
+const doc = new GoogleSpreadsheet('TU_ID_DE_HOJA_DE_GOOGLE', serviceAccountAuth);
 
 // RUTA DE LOGIN
 app.post('/api/login', async (req, res) => {
@@ -47,7 +48,7 @@ app.post('/api/login', async (req, res) => {
         }
     } catch (error) {
         console.error("Error en Login:", error);
-        res.status(500).json({ success: false, message: 'Error de base de datos' });
+        res.status(500).json({ success: false, message: 'Error de conexión' });
     }
 });
 
