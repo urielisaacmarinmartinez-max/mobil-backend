@@ -3,30 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MOBIL APP</title>
-    <style>
-        body { font-family: sans-serif; text-align: center; padding: 50px; background: #f4f4f4; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
-    </style>
+    <title>POLIMOTORS Pedidos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body>
-    <div class="card">
-        <h1>Bienvenido a MOBIL</h1>
-        <p>Registra tu pedido aquí</p>
-        <button onclick="enviarDatos()">Enviar Pedido</button>
-    </div>
+<body class="bg-slate-50 font-sans text-slate-900">
+    <div class="flex h-screen">
+        <aside class="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col p-6">
+            <div class="flex items-center gap-3 mb-10">
+                <div class="bg-red-600 p-2 rounded-lg text-white">
+                    <i class="fas fa-gas-pump text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-slate-800 text-sm leading-tight">POLIMOTORS Pedidos</h1>
+                    <p class="text-xs text-slate-400">Panel de Logística</p>
+                </div>
+            </div>
+            <nav class="space-y-2 flex-1">
+                <a href="#" class="flex items-center gap-3 p-3 bg-blue-50 text-blue-600 rounded-xl font-medium">
+                    <i class="fas fa-th-large"></i> Dashboard
+                </a>
+                <a href="#" class="flex items-center gap-3 p-3 text-slate-500 hover:bg-slate-50 rounded-xl">
+                    <i class="fas fa-box"></i> Pedidos
+                </a>
+                <a href="#" class="flex items-center gap-3 p-3 text-slate-500 hover:bg-slate-50 rounded-xl">
+                    <i class="fas fa-users"></i> Clientes
+                </a>
+            </nav>
+        </aside>
 
-    <script>
-        function enviarDatos() {
-            // Aquí usaremos el link de Render que ya tienes
-            fetch('https://mobil-backend-3egl.onrender.com/api/pedido', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ producto: "Galones", cantidad: 1 })
-            })
-            .then(res => alert("¡Pedido enviado con éxito!"));
-        }
-    </script>
+        <main class="flex-1 overflow-y-auto p-4 md:p-10">
+            <header class="flex justify-between items-center mb-8">
+                <div>
+                    <h2 class="text-3xl font-bold">Dashboard</h2>
+                    <p class="text-slate-500">Resumen de operaciones de combustible</p>
+                </div>
+                <button class="bg-red-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-red-200 hover:bg-red-700 transition-all">
+                    + Nuevo Pedido
+                </button>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+                <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="text-slate-400 font-medium">PEDIDOS PENDIENTES</span>
+                        <div class="bg-orange-100 p-2 rounded-lg text-orange-600"><i class="far fa-clock"></i></div>
+                    </div>
+                    <div class="text-4xl font-bold mb-1">3</div>
+                    <p class="text-sm text-slate-400">Por confirmar o asignar</p>
+                </div>
+                <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="text-slate-400 font-medium">EN RUTA</span>
+                        <div class="bg-blue-100 p-2 rounded-lg text-blue-600"><i class="fas fa-truck"></i></div>
+                    </div>
+                    <div class="text-4xl font-bold mb-1">2</div>
+                    <p class="text-sm text-slate-400">Entregas en camino</p>
+                </div>
+                <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="text-slate-400 font-medium">ENTREGADOS</span>
+                        <div class="bg-emerald-100 p-2 rounded-lg text-emerald-600"><i class="far fa-check-circle"></i></div>
+                    </div>
+                    <div class="text-4xl font-bold mb-1">4</div>
+                    <p class="text-sm text-slate-400">Este mes</p>
+                </div>
+                <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="text-slate-400 font-medium">INGRESOS</span>
+                    </div>
+                    <div class="text-3xl font-bold mb-1 text-slate-800">$2.014.254</div>
+                    <p class="text-sm text-slate-400">Pedidos completados</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-red-600 p-8 rounded-[40px] text-white">
+                    <i class="fas fa-gas-pump text-4xl mb-6"></i>
+                    <div class="text-5xl font-bold mb-2">9</div>
+                    <div class="text-xl font-medium opacity-90">Total Pedidos</div>
+                    <div class="text-sm opacity-70">Histórico completo</div>
+                </div>
+                <div class="bg-slate-900 p-8 rounded-[40px] text-white">
+                    <i class="fas fa-user-friends text-4xl mb-6"></i>
+                    <div class="text-5xl font-bold mb-2">57</div>
+                    <div class="text-xl font-medium opacity-90">Clientes</div>
+                    <div class="text-sm opacity-70">Empresas registradas</div>
+                </div>
+                <div class="bg-emerald-500 p-8 rounded-[40px] text-white">
+                    <i class="fas fa-shipping-fast text-4xl mb-6"></i>
+                    <div class="text-5xl font-bold mb-2">2/3</div>
+                    <div class="text-xl font-medium opacity-90">Conductores</div>
+                    <div class="text-sm opacity-70">Disponibles ahora</div>
+                </div>
+            </div>
+        </main>
+    </div>
 </body>
 </html>
