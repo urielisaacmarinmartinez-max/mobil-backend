@@ -29,12 +29,13 @@
             </div>
 
             <nav class="space-y-1">
-                <a href="#" class="flex items-center gap-4 p-4 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-900/20">
-                    <i class="fas fa-th-large"></i> Dashboard
-                </a>
-                <a href="#" class="flex items-center gap-4 p-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl transition-all font-semibold">
-                    <i class="fas fa-store"></i> Mis Estaciones
-                </a>
+    <button onclick="irDashboard()" class="w-full flex items-center gap-4 p-4 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-900/20">
+        <i class="fas fa-th-large"></i> Dashboard
+    </button>
+    <button onclick="irMisEstaciones()" class="w-full flex items-center gap-4 p-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl transition-all font-semibold text-left">
+        <i class="fas fa-store"></i> Mis Estaciones
+    </button>
+    </nav>
                 <a href="#" class="flex items-center gap-4 p-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl transition-all font-semibold">
                     <i class="fas fa-clipboard-list"></i> Mis Pedidos
                 </a>
@@ -408,7 +409,80 @@
         localStorage.clear();
         window.location.href = '/login.html';
     }
+function irMisEstaciones() {
+    // 1. Ocultar Dashboard, mostrar vista de estaciones
+    document.getElementById('dashboardView').classList.add('hidden');
+    document.getElementById('estacionesView').classList.remove('hidden');
+    
+    // 2. Ejecutar el dibujo de las tarjetas
+    dibujarEstaciones();
+}
 
+function irDashboard() {
+    document.getElementById('estacionesView').classList.add('hidden');
+    document.getElementById('dashboardView').classList.remove('hidden');
+}
+
+function dibujarEstaciones() {
+    const container = document.getElementById('estacionesCardsContainer');
+    const userData = JSON.parse(localStorage.getItem('usuario'));
+    
+    // Filtramos para que solo vea las estaciones que tiene permitidas
+    const misEstacionesIds = userData.estaciones.split(',').map(s => s.trim());
+    const filtradas = estacionesData.filter(est => {
+        const idActual = (est.id || est.ID_Estacion || est.ID_ESTACION);
+        return misEstacionesIds.includes(idActual);
+    });
+
+    container.innerHTML = filtradas.map(est => {
+        // Mapeo exacto de tus columnas de Excel (TIRILLAS)
+        const capExtra = est.CAP_EXTRA || 0;
+        const capSupreme = est.CAP_SUPREME || 0;
+        const capDiesel = est.CAP_DIESEL || 0;
+        
+        const volExtra = est.VOL_EXTRA || 0;
+        const volSupreme = est.VOL_SUPREME || 0;
+        const volDiesel = est.VOL_DIESEL || 0;
+
+        return `
+            <div class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100 mb-6">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-2xl font-black text-slate-800">${est.ESTACION || est.nombre}</h2>
+                    <p class="text-emerald-600 font-bold text-xl">Crédito: ${new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(est.credito || 0)}</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    ${renderFuelCard('EXTRA', 'emerald', capExtra, volExtra)}
+                    ${renderFuelCard('SUPREME', 'red', capSupreme, volSupreme)}
+                    ${capDiesel > 0 || volDiesel > 0 ? renderFuelCard('DIESEL', 'slate', capDiesel, volDiesel) : `
+                        <div class="bg-slate-50 rounded-3xl border border-dashed border-slate-200 flex items-center justify-center p-8">
+                            <span class="text-slate-300 font-bold uppercase text-[10px] tracking-widest">Sin Diesel</span>
+                        </div>
+                    `}
+                </div>
+            </div>`;
+    }).join('');
+}
+
+function renderFuelCard(label, color, cap, vol) {
+    return `
+        <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100">
+            <p class="text-${color}-600 font-black text-center text-xs mb-4 uppercase tracking-widest border-b border-${color}-100 pb-2">${label}</p>
+            <div class="grid grid-cols-2 gap-2 mb-4 text-center">
+                <div>
+                    <p class="text-[8px] font-black text-slate-400 uppercase">Capacidad</p>
+                    <p class="text-xs font-bold text-slate-700">${cap.toLocaleString()} L</p>
+                </div>
+                <div>
+                    <p class="text-[8px] font-black text-slate-400 uppercase">Vta Prom.</p>
+                    <p class="text-xs font-bold text-slate-700">---</p>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-xl text-center shadow-sm">
+                <p class="text-[8px] font-black text-slate-400 uppercase mb-1">Volumen Actual</p>
+                <p class="text-2xl font-black text-slate-900">${vol.toLocaleString()} L</p>
+            </div>
+        </div>`;
+}
     window.onload = initDashboard;
 </script>
 </body>
