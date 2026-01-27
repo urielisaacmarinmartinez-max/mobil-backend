@@ -70,7 +70,7 @@ app.get('/api/estaciones', async (req, res) => {
             nombre: row.get('Nombre') || '',
             direccion: row.get('Dirección') || '',
             // Manejo más robusto de números y strings
-            credito: parseFloat(String(row.get('Crédito Disponible') || '0').replace(/[$,]/g, '')) || 0,
+            credito: parseFloat(String(row.get('Crédito Disponible') || '0').replace(/[$,]/g, '').replace(/,/g, '')) || 0,
             precios: {
                 Extra: parseFloat(String(row.get('Precio Extra') || '0').replace(/[$,]/g, '')) || 0,
                 Supreme: parseFloat(String(row.get('Precio Supreme') || '0').replace(/[$,]/g, '')) || 0,
