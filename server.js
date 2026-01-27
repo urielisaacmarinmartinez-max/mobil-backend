@@ -52,27 +52,55 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// 2. CARGAR ESTACIONES
+// 2. CARGAR ESTACIONES (Ahora incluye datos de TIRILLAS)
 app.get('/api/estaciones', async (req, res) => {
     try {
         await doc.loadInfo();
-        const sheet = doc.sheetsByTitle['Estaciones']; 
-        if (!sheet) return res.status(404).json({ error: "Hoja no encontrada" });
+        const sheetEst = doc.sheetsByTitle['Estaciones']; 
+        const sheetTirillas = doc.sheetsByTitle['TIRILLAS'];
+        
+        if (!sheetEst || !sheetTirillas) return res.status(404).json({ error: "Hojas no encontradas" });
 
-        const rows = await sheet.getRows();
-        const estaciones = rows.map(row => ({
-            id: row.get('ID_Estacion') || '',
-            nombre: row.get('Nombre') || '',
-            direccion: row.get('Dirección') || '',
-            credito: parseFloat(String(row.get('Crédito Disponible') || '0').replace(/[$,]/g, '').replace(/,/g, '')) || 0,
-            precios: {
-                Extra: parseFloat(String(row.get('Precio Extra') || '0').replace(/[$,]/g, '').replace(/,/g, '')) || 0,
-                Supreme: parseFloat(String(row.get('Precio Supreme') || '0').replace(/[$,]/g, '').replace(/,/g, '')) || 0,
-                Diesel: parseFloat(String(row.get('Precio Diesel') || '0').replace(/[$,]/g, '').replace(/,/g, '')) || 0
-            }
-        }));
+        const rowsEst = await sheetEst.getRows();
+        const rowsTir = await sheetTirillas.getRows();
+
+        const estaciones = rowsEst.map(row => {
+            const id = row.get('ID_Estacion') || '';
+            // Buscamos los datos técnicos en la hoja de TIRILLAS
+            const datosTirilla = rowsTir.find(t => t.get('ESTACION') === id);
+
+            return {
+                id: id,
+                nombre: row.get('Nombre') || '',
+                direccion: row.get('Dirección') || '',
+                credito: parseFloat(String(row.get('Crédito Disponible') || '0').replace(/[$,]/g, '').replace(/,/g, '')) || 0,
+                precios: {
+                    Extra: parseFloat(String(row.get('Precio Extra') || '0').replace(/[$,]/g, '')) || 0,
+                    Supreme: parseFloat(String(row.get('Precio Supreme') || '0').replace(/[$,]/g, '')) || 0,
+                    Diesel: parseFloat(String(row.get('Precio Diesel') || '0').replace(/[$,]/g, '')) || 0
+                },
+                // Datos de la hoja TIRILLAS
+                capacidad: {
+                    extra: datosTirilla?.get('CAP_EXTRA') || 0,
+                    supreme: datosTirilla?.get('CAP_SUPREME') || 0,
+                    diesel: datosTirilla?.get('CAP_DIESEL') || 0
+                },
+                ventaPromedio: {
+                    extra: datosTirilla?.get('VTA_EXTRA') || 0,
+                    supreme: datosTirilla?.get('VTA_SUPREME') || 0,
+                    diesel: datosTirilla?.get('VTA_DIESEL') || 0
+                },
+                volumenActual: {
+                    extra: datosTirilla?.get('VOL_EXTRA') || 0,
+                    supreme: datosTirilla?.get('VOL_SUPREME') || 0,
+                    diesel: datosTirilla?.get('VOL_DIESEL') || 0
+                },
+                ultimaActualizacion: datosTirilla?.get('ULTIMA_ACTUALIZACION') || 'Sin fecha'
+            };
+        });
         res.json(estaciones);
     } catch (error) {
+        console.error("Error al cargar estaciones:", error);
         res.status(500).json({ error: "Error al cargar estaciones" });
     }
 });
@@ -100,14 +128,13 @@ app.post('/api/pedidos', async (req, res) => {
     }
 });
 
-// 4. OBTENER PEDIDOS (NUEVA RUTA PARA EL DASHBOARD)
+// 4. OBTENER PEDIDOS (DASHBOARD)
 app.get('/api/obtener-pedidos', async (req, res) => {
     try {
         await doc.loadInfo();
         const sheet = doc.sheetsByTitle['Pedidos'];
         const rows = await sheet.getRows();
         
-        // Invertimos el orden para que los más nuevos salgan primero y tomamos 6
         const pedidos = rows.reverse().slice(0, 6).map(row => ({
             fecha: row.get('FECHA DE REGISTRO'),
             estacion: row.get('ESTACIÓN'),
@@ -117,16 +144,43 @@ app.get('/api/obtener-pedidos', async (req, res) => {
             estatus: row.get('ESTATUS') || 'Pendiente'
         }));
 
-        // Contadores para los cuadritos del Dashboard
         const estadisticas = {
             pendientes: rows.filter(r => r.get('ESTATUS') === 'Pendiente').length,
-            enRuta: rows.filter(r => r.get('ESTATUS') === 'En Ruta').length
+            enRuta: rows.filter(r => r.get('ESTATUS') === 'En Ruta').length,
+            entregados: rows.filter(r => r.get('ESTATUS') === 'Entregado').length // Nueva tercia
         };
 
         res.json({ pedidos, estadisticas });
     } catch (error) {
-        console.error("Error al leer pedidos:", error);
-        res.status(500).json({ pedidos: [], estadisticas: { pendientes: 0, enRuta: 0 } });
+        res.status(500).json({ pedidos: [], estadisticas: { pendientes: 0, enRuta: 0, entregados: 0 } });
+    }
+});
+
+// 5. NUEVA RUTA: ACTUALIZAR VOLUMEN EN HOJA TIRILLAS
+app.post('/api/actualizar-tirilla', async (req, res) => {
+    const { id_estacion, volExtra, volSupreme, volDiesel } = req.body;
+    try {
+        await doc.loadInfo();
+        const sheet = doc.sheetsByTitle['TIRILLAS'];
+        const rows = await sheet.getRows();
+        
+        const fila = rows.find(r => r.get('ESTACION') === id_estacion);
+        
+        if (fila) {
+            fila.set('VOL_EXTRA', volExtra);
+            fila.set('VOL_SUPREME', volSupreme);
+            fila.set('VOL_DIESEL', volDiesel);
+            // La fecha se actualiza vía App Script en Google Sheets o podemos ponerla aquí:
+            fila.set('ULTIMA_ACTUALIZACION', new Date().toLocaleString());
+            
+            await fila.save();
+            res.json({ success: true });
+        } else {
+            res.status(404).json({ success: false, message: "Estación no encontrada en TIRILLAS" });
+        }
+    } catch (error) {
+        console.error("Error al actualizar tirilla:", error);
+        res.status(500).json({ success: false });
     }
 });
 
