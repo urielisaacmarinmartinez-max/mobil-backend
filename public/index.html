@@ -11,6 +11,8 @@
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
         .side-panel-transition { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         .card-shadow { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); }
+        /* Ocultar flechas de input number */
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
 <body class="h-screen overflow-hidden flex text-slate-800">
@@ -71,7 +73,7 @@
                     <p class="text-[11px] font-black text-slate-400 uppercase tracking-[0.15em]">Pedidos Pendientes</p>
                     <div class="h-10 w-10 bg-orange-50 rounded-xl flex items-center justify-center text-orange-500"><i class="far fa-clock text-lg"></i></div>
                 </div>
-                <h3 class="text-5xl font-black text-slate-900 z-10">3</h3>
+                <h3 class="text-5xl font-black text-slate-900 z-10">0</h3>
                 <p class="text-[11px] font-bold text-slate-400 z-10">Por confirmar o asignar</p>
             </div>
             <div class="bg-white p-8 rounded-[2rem] card-shadow border border-slate-100 flex flex-col justify-between h-48 relative overflow-hidden">
@@ -79,7 +81,7 @@
                     <p class="text-[11px] font-black text-slate-400 uppercase tracking-[0.15em]">En Ruta</p>
                     <div class="h-10 w-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-500"><i class="fas fa-truck text-lg"></i></div>
                 </div>
-                <h3 class="text-5xl font-black text-slate-900 z-10">2</h3>
+                <h3 class="text-5xl font-black text-slate-900 z-10">0</h3>
                 <p class="text-[11px] font-bold text-slate-400 z-10">Entregas en camino</p>
             </div>
             <div class="bg-white p-8 rounded-[2rem] card-shadow border border-slate-100 flex flex-col justify-between h-48 relative overflow-hidden">
@@ -129,20 +131,20 @@
                 </div>
                 <div class="space-y-2">
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cantidad (L)</label>
-                    <input id="fuelQty" type="number" oninput="calcTotal()" placeholder="20000" class="w-full p-5 bg-slate-50 rounded-2xl font-black border-none">
+                    <input id="fuelQty" type="number" oninput="calcTotal()" placeholder="Ej. 20000" required class="w-full p-5 bg-slate-50 rounded-2xl font-black border-none">
                 </div>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
                 <div class="space-y-2">
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fecha Entrega</label>
-                    <input type="date" required class="w-full p-5 bg-slate-50 rounded-2xl font-bold border-none">
+                    <input id="deliveryDate" type="date" required class="w-full p-5 bg-slate-50 rounded-2xl font-bold border-none">
                 </div>
                 <div class="space-y-2">
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Prioridad</label>
-                    <select class="w-full p-5 bg-slate-50 rounded-2xl font-bold border-none">
-                        <option>Normal</option>
-                        <option>Urgente</option>
+                    <select id="orderPriority" class="w-full p-5 bg-slate-50 rounded-2xl font-bold border-none">
+                        <option value="Normal">Normal</option>
+                        <option value="Urgente">Urgente</option>
                     </select>
                 </div>
             </div>
@@ -162,7 +164,6 @@
     <script>
         let estacionesData = [];
 
-        // 1. VERIFICAR LOGIN Y CARGAR DATOS DEL USUARIO
         function initDashboard() {
             const userData = JSON.parse(localStorage.getItem('usuario'));
             if (!userData) {
@@ -178,7 +179,6 @@
             cargarEstaciones();
         }
 
-        // 2. CARGAR ESTACIONES DESDE EL EXCEL (VÍA SERVER)
         async function cargarEstaciones() {
             try {
                 const response = await fetch('/api/estaciones');
@@ -198,18 +198,16 @@
             }
         }
 
-        // 3. ACTUALIZAR INFO SEGÚN SELECCIÓN
         function loadConfig() {
             const id = document.getElementById('selEstacion').value;
             const est = estacionesData.find(e => e.id === id);
             if (est) {
                 document.getElementById('dirAuto').value = est.direccion;
-                document.getElementById('creditoHeader').innerText = `$${est.credito.toLocaleString()}`;
+                document.getElementById('creditoHeader').innerText = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(est.credito);
                 calcTotal();
             }
         }
 
-        // 4. CALCULAR TOTAL EN TIEMPO REAL
         function calcTotal() {
             const id = document.getElementById('selEstacion').value;
             const type = document.getElementById('fuelType').value;
@@ -219,21 +217,70 @@
             if (est) {
                 const precio = est.precios[type];
                 const total = precio * qty;
-                document.getElementById('finalTotal').innerText = `$${total.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+                document.getElementById('finalTotal').innerText = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(total);
                 
-                // Validación de Crédito
                 const btn = document.getElementById('btnConfirm');
-                if (total > est.credito) {
+                if (total > est.credito || total <= 0) {
                     btn.disabled = true;
-                    btn.innerText = "Crédito Insuficiente";
-                    btn.classList.replace('bg-red-600', 'bg-slate-700');
+                    btn.innerText = total > 0 ? "Crédito Insuficiente" : "Ingrese Cantidad";
+                    btn.classList.add('bg-slate-700');
+                    btn.classList.remove('bg-red-600');
                 } else {
                     btn.disabled = false;
                     btn.innerText = "Confirmar Orden";
-                    btn.classList.replace('bg-slate-700', 'bg-red-600');
+                    btn.classList.add('bg-red-600');
+                    btn.classList.remove('bg-slate-700');
                 }
             }
         }
+
+        document.getElementById('orderForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnConfirm');
+            
+            // Bloquear botón para evitar doble envío
+            btn.disabled = true;
+            btn.innerText = "Procesando...";
+
+            try {
+                const userData = JSON.parse(localStorage.getItem('usuario'));
+                const idEstacion = document.getElementById('selEstacion').value;
+                const est = estacionesData.find(e => e.id === idEstacion);
+
+                const pedido = {
+                    estacion: est.nombre,
+                    combustible: document.getElementById('fuelType').value,
+                    litros: document.getElementById('fuelQty').value,
+                    total: document.getElementById('finalTotal').innerText,
+                    fecha_entrega: document.getElementById('deliveryDate').value,
+                    prioridad: document.getElementById('orderPriority').value,
+                    usuario: userData.nombre
+                };
+
+                const response = await fetch('/api/pedidos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(pedido)
+                });
+
+                const resData = await response.json();
+                
+                if (resData.success) {
+                    alert('¡Pedido registrado con éxito en MOBIL Sheets!');
+                    document.getElementById('orderForm').reset();
+                    document.getElementById('finalTotal').innerText = "$0.00";
+                    togglePanel();
+                } else {
+                    alert('Error al guardar: ' + (resData.message || 'Error desconocido'));
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert('No se pudo conectar con el servidor.');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Confirmar Orden";
+            }
+        };
 
         function togglePanel() {
             const p = document.getElementById('sidePanel');
@@ -248,7 +295,6 @@
             window.location.href = '/login.html';
         }
 
-        // Iniciar todo al cargar
         window.onload = initDashboard;
     </script>
 </body>

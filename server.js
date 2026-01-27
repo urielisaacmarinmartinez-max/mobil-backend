@@ -3,7 +3,6 @@ import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { JWT } from 'google-auth-library';
 import { createRequire } from 'module';
 
-// Esto permite seguir leyendo el JSON de credenciales en modo ESM
 const require = createRequire(import.meta.url);
 const keys = require('./google-auth.json');
 
@@ -11,18 +10,16 @@ const app = express();
 app.use(express.json());
 app.use(express.static('public'));
 
-// CONFIGURACIÓN DE GOOGLE SHEETS
 const serviceAccountAuth = new JWT({
   email: keys.client_email,
   key: keys.private_key,
   scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });
 
-// REEMPLAZA ESTE ID CON EL TUYO REAL
-const doc = new GoogleSpreadsheet('1GALSgq5RhFv103c307XYeNoorQ5gAzxFR1Q64XMGr7Q', serviceAccountAuth);
+// REEMPLAZA CON TU ID REAL
+const doc = new GoogleSpreadsheet('TU_ID_DE_LA_HOJA', serviceAccountAuth);
 
-// RUTA DE LOGIN
-// BUSCA ESTA SECCIÓN EN TU SERVER.JS Y REEMPLÁZALA:
+// 1. LOGIN (Pestaña "Usuarios")
 app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
     try {
@@ -30,11 +27,9 @@ app.post('/api/login', async (req, res) => {
         const sheet = doc.sheetsByTitle['Usuarios']; 
         const rows = await sheet.getRows();
         
-        // Buscamos al usuario ignorando filas vacías y asegurando que existan los datos
         const user = rows.find(r => {
-            const rowEmail = r.get('email');
-            const rowPass = r.get('password');
-            
+            const rowEmail = r.get('EMAIL');
+            const rowPass = r.get('PASSWORD');
             return rowEmail && rowPass && 
                    rowEmail.toString().toLowerCase() === email.toLowerCase() && 
                    rowPass.toString() === password.toString();
@@ -44,9 +39,9 @@ app.post('/api/login', async (req, res) => {
             res.json({ 
                 success: true, 
                 user: {
-                    nombre: user.get('nombre'),
-                    rol: user.get('rol'),
-                    estaciones: user.get('estaciones')
+                    nombre: user.get('NOMBRE'),
+                    rol: user.get('ROL'),
+                    estaciones: user.get('ESTACIONES')
                 }
             });
         } else {
@@ -54,11 +49,11 @@ app.post('/api/login', async (req, res) => {
         }
     } catch (error) {
         console.error("Error en Login:", error);
-        res.status(500).json({ success: false, message: 'Error de conexión' });
+        res.status(500).json({ success: false });
     }
 });
 
-// RUTA PARA OBTENER ESTACIONES
+// 2. CARGAR ESTACIONES (Pestaña "Estaciones")
 app.get('/api/estaciones', async (req, res) => {
     try {
         await doc.loadInfo();
@@ -66,49 +61,48 @@ app.get('/api/estaciones', async (req, res) => {
         const rows = await sheet.getRows();
         
         const estaciones = rows.map(row => ({
-            id: row.get('id_estacion'),
-            nombre: row.get('nombre_estacion'),
-            direccion: row.get('direccion'),
+            id: row.get('ID_Estacion'),
+            nombre: row.get('Nombre'),
+            direccion: row.get('Dirección'),
             precios: {
-                "Extra": parseFloat(row.get('precio_extra')) || 0,
-                "Supreme": parseFloat(row.get('precio_supreme')) || 0,
-                "Diesel": parseFloat(row.get('precio_diesel')) || 0
+                "Extra": parseFloat(row.get('Precio Extra')) || 0,
+                "Supreme": parseFloat(row.get('Precio Supreme')) || 0,
+                "Diesel": parseFloat(row.get('Precio Diesel')) || 0
             },
-            credito: parseFloat(row.get('credito_disponible')) || 0
+            credito: parseFloat(row.get('Crédito Disponible')) || 0
         }));
-
         res.json(estaciones);
     } catch (error) {
-        console.error("Error cargando estaciones:", error);
+        console.error("Error estaciones:", error);
         res.status(500).json({ success: false });
     }
 });
 
-const PORT = process.env.PORT || 3000;
-// RUTA PARA GUARDAR UN NUEVO PEDIDO
+// 3. GUARDAR PEDIDO (Pestaña "Pedidos")
 app.post('/api/pedidos', async (req, res) => {
     const pedido = req.body;
     try {
         await doc.loadInfo();
-        const sheet = doc.sheetsByTitle['Pedidos']; // Asegúrate de tener esta pestaña en tu Excel
+        const sheet = doc.sheetsByTitle['Pedidos']; 
         
-        // Añadir la fila con los datos que vienen desde la web
         await sheet.addRow({
-            fecha_registro: new Date().toLocaleString(),
-            estacion: pedido.estacion,
-            combustible: pedido.combustible,
-            litros: pedido.litros,
-            total: pedido.total,
-            fecha_entrega: pedido.fecha_entrega,
-            prioridad: pedido.prioridad,
-            estatus: 'Pendiente',
-            usuario: pedido.usuario
+            'FECHA DE REGISTRO': new Date().toLocaleString(),
+            'ESTACIÓN': pedido.estacion,
+            'TIPO DE PRODUCTO': pedido.combustible,
+            'LITROS': pedido.litros,
+            'TOTAL': pedido.total,
+            'FECHA DE ENTREGA': pedido.fecha_entrega,
+            'PRIORIDAD': pedido.prioridad,
+            'ESTATUS': 'Pendiente',
+            'USUARIO': pedido.usuario
         });
 
-        res.json({ success: true, message: 'Pedido guardado con éxito' });
+        res.json({ success: true });
     } catch (error) {
         console.error("Error al guardar pedido:", error);
-        res.status(500).json({ success: false, message: 'No se pudo guardar el pedido' });
+        res.status(500).json({ success: false });
     }
 });
+
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`Servidor activo en puerto ${PORT}`));
