@@ -52,33 +52,38 @@ app.post('/api/login', async (req, res) => {
         res.status(500).json({ success: false });
     }
 });
-
 // 2. CARGAR ESTACIONES (Pestaña "Estaciones")
 app.get('/api/estaciones', async (req, res) => {
     try {
-        const sheet = doc.sheetsByTitle['Estaciones']; // Asegúrate que se llame exactamente así
+        await doc.loadInfo(); // <--- ESTA LÍNEA ES VITAL
+        const sheet = doc.sheetsByTitle['Estaciones']; 
+        
+        if (!sheet) {
+            console.error("No se encontró la pestaña 'Estaciones'");
+            return res.status(404).json({ error: "Hoja no encontrada" });
+        }
+
         const rows = await sheet.getRows();
         
         const estaciones = rows.map(row => ({
-            // Usamos || para que busque de ambas formas
-            id: row.get('ID_Estacion') || row.get('id_estacion') || row.get('ID'),
-            nombre: row.get('Nombre') || row.get('nombre'),
-            direccion: row.get('Dirección') || row.get('direccion'),
-            credito: parseFloat(row.get('Crédito Disponible') || row.get('credito')) || 0,
+            id: row.get('ID_Estacion') || '',
+            nombre: row.get('Nombre') || '',
+            direccion: row.get('Dirección') || '',
+            // Manejo más robusto de números y strings
+            credito: parseFloat(String(row.get('Crédito Disponible') || '0').replace(/[$,]/g, '')) || 0,
             precios: {
-                Extra: parseFloat(row.get('Precio Extra') || row.get('extra')) || 0,
-                Supreme: parseFloat(row.get('Precio Supreme') || row.get('supreme')) || 0,
-                Diesel: parseFloat(row.get('Precio Diesel') || row.get('diesel')) || 0
+                Extra: parseFloat(String(row.get('Precio Extra') || '0').replace(/[$,]/g, '')) || 0,
+                Supreme: parseFloat(String(row.get('Precio Supreme') || '0').replace(/[$,]/g, '')) || 0,
+                Diesel: parseFloat(String(row.get('Precio Diesel') || '0').replace(/[$,]/g, '')) || 0
             }
         }));
         
         res.json(estaciones);
     } catch (error) {
-        console.error("Error cargando estaciones:", error);
-        res.status(500).json({ error: "No se pudieron cargar las estaciones" });
+        console.error("Error detallado en estaciones:", error);
+        res.status(500).json({ error: "Error al cargar estaciones" });
     }
 });
-
 // 3. GUARDAR PEDIDO (Pestaña "Pedidos")
 app.post('/api/pedidos', async (req, res) => {
     const pedido = req.body;
