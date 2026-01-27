@@ -16,10 +16,9 @@ const serviceAccountAuth = new JWT({
   scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });
 
-// REEMPLAZA CON TU ID REAL
 const doc = new GoogleSpreadsheet('1GALSgq5RhFv103c307XYeNoorQ5gAzxFR1Q64XMGr7Q', serviceAccountAuth);
 
-// 1. LOGIN (Pestaña "Usuarios")
+// 1. LOGIN
 app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
     try {
@@ -52,45 +51,38 @@ app.post('/api/login', async (req, res) => {
         res.status(500).json({ success: false });
     }
 });
-// 2. CARGAR ESTACIONES (Pestaña "Estaciones")
+
+// 2. CARGAR ESTACIONES
 app.get('/api/estaciones', async (req, res) => {
     try {
-        await doc.loadInfo(); // <--- ESTA LÍNEA ES VITAL
+        await doc.loadInfo();
         const sheet = doc.sheetsByTitle['Estaciones']; 
-        
-        if (!sheet) {
-            console.error("No se encontró la pestaña 'Estaciones'");
-            return res.status(404).json({ error: "Hoja no encontrada" });
-        }
+        if (!sheet) return res.status(404).json({ error: "Hoja no encontrada" });
 
         const rows = await sheet.getRows();
-        
         const estaciones = rows.map(row => ({
             id: row.get('ID_Estacion') || '',
             nombre: row.get('Nombre') || '',
             direccion: row.get('Dirección') || '',
-            // Manejo más robusto de números y strings
             credito: parseFloat(String(row.get('Crédito Disponible') || '0').replace(/[$,]/g, '').replace(/,/g, '')) || 0,
             precios: {
-                Extra: parseFloat(String(row.get('Precio Extra') || '0').replace(/[$,]/g, '')) || 0,
-                Supreme: parseFloat(String(row.get('Precio Supreme') || '0').replace(/[$,]/g, '')) || 0,
-                Diesel: parseFloat(String(row.get('Precio Diesel') || '0').replace(/[$,]/g, '')) || 0
+                Extra: parseFloat(String(row.get('Precio Extra') || '0').replace(/[$,]/g, '').replace(/,/g, '')) || 0,
+                Supreme: parseFloat(String(row.get('Precio Supreme') || '0').replace(/[$,]/g, '').replace(/,/g, '')) || 0,
+                Diesel: parseFloat(String(row.get('Precio Diesel') || '0').replace(/[$,]/g, '').replace(/,/g, '')) || 0
             }
         }));
-        
         res.json(estaciones);
     } catch (error) {
-        console.error("Error detallado en estaciones:", error);
         res.status(500).json({ error: "Error al cargar estaciones" });
     }
 });
-// 3. GUARDAR PEDIDO (Pestaña "Pedidos")
+
+// 3. GUARDAR PEDIDO
 app.post('/api/pedidos', async (req, res) => {
     const pedido = req.body;
     try {
         await doc.loadInfo();
         const sheet = doc.sheetsByTitle['Pedidos']; 
-        
         await sheet.addRow({
             'FECHA DE REGISTRO': new Date().toLocaleString(),
             'ESTACIÓN': pedido.estacion,
@@ -102,11 +94,39 @@ app.post('/api/pedidos', async (req, res) => {
             'ESTATUS': 'Pendiente',
             'USUARIO': pedido.usuario
         });
-
         res.json({ success: true });
     } catch (error) {
-        console.error("Error al guardar pedido:", error);
         res.status(500).json({ success: false });
+    }
+});
+
+// 4. OBTENER PEDIDOS (NUEVA RUTA PARA EL DASHBOARD)
+app.get('/api/obtener-pedidos', async (req, res) => {
+    try {
+        await doc.loadInfo();
+        const sheet = doc.sheetsByTitle['Pedidos'];
+        const rows = await sheet.getRows();
+        
+        // Invertimos el orden para que los más nuevos salgan primero y tomamos 6
+        const pedidos = rows.reverse().slice(0, 6).map(row => ({
+            fecha: row.get('FECHA DE REGISTRO'),
+            estacion: row.get('ESTACIÓN'),
+            producto: row.get('TIPO DE PRODUCTO'),
+            litros: row.get('LITROS'),
+            total: row.get('TOTAL'),
+            estatus: row.get('ESTATUS') || 'Pendiente'
+        }));
+
+        // Contadores para los cuadritos del Dashboard
+        const estadisticas = {
+            pendientes: rows.filter(r => r.get('ESTATUS') === 'Pendiente').length,
+            enRuta: rows.filter(r => r.get('ESTATUS') === 'En Ruta').length
+        };
+
+        res.json({ pedidos, estadisticas });
+    } catch (error) {
+        console.error("Error al leer pedidos:", error);
+        res.status(500).json({ pedidos: [], estadisticas: { pendientes: 0, enRuta: 0 } });
     }
 });
 

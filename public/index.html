@@ -168,155 +168,198 @@
     </div>
 
     <script>
-        let estacionesData = [];
+    let estacionesData = [];
 
-        function initDashboard() {
-            const userData = JSON.parse(localStorage.getItem('usuario'));
-            if (!userData) {
-                window.location.href = '/login.html';
+    async function initDashboard() {
+        const userData = JSON.parse(localStorage.getItem('usuario'));
+        if (!userData) {
+            window.location.href = '/login.html';
+            return;
+        }
+
+        document.getElementById('userName').innerText = userData.nombre;
+        document.getElementById('welcomeMsg').innerText = `Hola, ${userData.nombre.split(' ')[0]}`;
+        document.getElementById('userStation').innerText = userData.estaciones;
+        document.getElementById('userInitials').innerText = userData.nombre.substring(0, 2);
+
+        await cargarEstaciones();
+        await cargarPedidosDashboard(); // <--- Carga los pedidos al iniciar
+
+        // ACTUALIZACIÓN AUTOMÁTICA CADA 30 SEGUNDOS
+        setInterval(sincronizar, 30000);
+    }
+
+    async function sincronizar() {
+        const icon = document.getElementById('syncIcon');
+        icon.classList.add('spin-anim'); 
+        
+        await cargarEstaciones();
+        await cargarPedidosDashboard(); // <--- Sincroniza también los pedidos
+        
+        loadConfig(); 
+        setTimeout(() => icon.classList.remove('spin-anim'), 1000);
+    }
+
+    // NUEVA FUNCIÓN: Dibuja los pedidos y actualiza contadores
+    async function cargarPedidosDashboard() {
+        try {
+            const response = await fetch('/api/obtener-pedidos');
+            const data = await response.json();
+            
+            // 1. Actualizar Contadores Superiores
+            const counters = document.querySelectorAll('h3.text-5xl');
+            if(counters.length >= 2) {
+                counters[0].innerText = data.estadisticas.pendientes; // Pedidos Pendientes
+                counters[1].innerText = data.estadisticas.enRuta;     // En Ruta
+            }
+
+            // 2. Dibujar Tarjetas de Pedidos
+            const container = document.getElementById('pedidosContainer');
+            
+            if (!data.pedidos || data.pedidos.length === 0) {
+                container.innerHTML = '<p class="text-slate-400 italic">No hay pedidos recientes para mostrar.</p>';
                 return;
             }
 
-            document.getElementById('userName').innerText = userData.nombre;
-            document.getElementById('welcomeMsg').innerText = `Hola, ${userData.nombre.split(' ')[0]}`;
-            document.getElementById('userStation').innerText = userData.estaciones;
-            document.getElementById('userInitials').innerText = userData.nombre.substring(0, 2);
+            container.innerHTML = data.pedidos.map(p => `
+                <div class="bg-white p-6 rounded-[2rem] card-shadow border border-slate-100 transition-all hover:scale-[1.02]">
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="px-3 py-1 ${p.estatus === 'Pendiente' ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'} text-[10px] font-black rounded-full uppercase tracking-wider">
+                            ${p.estatus}
+                        </span>
+                        <p class="text-[10px] text-slate-400 font-bold">${p.fecha ? p.fecha.split(',')[0] : 'Reciente'}</p>
+                    </div>
+                    <h4 class="font-black text-slate-900 mb-1 truncate">${p.estacion}</h4>
+                    <p class="text-xs text-slate-500 font-bold mb-4 uppercase tracking-tighter">${p.producto} — ${p.litros} L</p>
+                    <div class="flex justify-between items-center pt-4 border-t border-slate-50">
+                        <p class="text-[10px] font-black text-slate-400 uppercase">Total Cobrado</p>
+                        <p class="font-black text-slate-900">${p.total}</p>
+                    </div>
+                </div>
+            `).join('');
 
-            cargarEstaciones();
-
-            // ACTUALIZACIÓN AUTOMÁTICA CADA 30 SEGUNDOS
-            setInterval(sincronizar, 30000);
+        } catch (e) {
+            console.error("Error al cargar pedidos en dashboard:", e);
         }
+    }
 
-        async function sincronizar() {
-            const icon = document.getElementById('syncIcon');
-            icon.classList.add('spin-anim'); // Empezar a girar
-            await cargarEstaciones();
-            loadConfig(); // Actualizar la vista con los nuevos datos
-            setTimeout(() => icon.classList.remove('spin-anim'), 1000); // Parar de girar
+    async function cargarEstaciones() {
+        try {
+            const response = await fetch('/api/estaciones');
+            estacionesData = await response.json();
+            
+            const select = document.getElementById('selEstacion');
+            const valorActual = select.value;
+
+            select.innerHTML = '<option value="">Seleccione Estación</option>';
+            
+            estacionesData.forEach(est => {
+                const option = document.createElement('option');
+                option.value = est.id || est.ID_Estacion; 
+                option.textContent = est.nombre || est.Nombre;
+                select.appendChild(option);
+            });
+
+            if (valorActual) select.value = valorActual;
+        } catch (e) {
+            console.error("Error cargando estaciones", e);
         }
+    }
 
-        async function cargarEstaciones() {
-            try {
-                const response = await fetch('/api/estaciones');
-                estacionesData = await response.json();
-                
-                const select = document.getElementById('selEstacion');
-                const valorActual = select.value; // Guardar lo que estaba seleccionado
-
-                select.innerHTML = '<option value="">Seleccione Estación</option>';
-                
-                estacionesData.forEach(est => {
-                    const option = document.createElement('option');
-                    option.value = est.ID_Estacion || est.id; 
-                    option.textContent = est.Nombre || est.nombre;
-                    select.appendChild(option);
-                });
-
-                if (valorActual) select.value = valorActual; // Mantener selección
-            } catch (e) {
-                console.error("Error cargando estaciones", e);
-            }
+    function loadConfig() {
+        const id = document.getElementById('selEstacion').value;
+        const est = estacionesData.find(e => (e.id || e.ID_Estacion) === id);
+        if (est) {
+            document.getElementById('dirAuto').value = est.direccion;
+            document.getElementById('creditoHeader').innerText = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(est.credito);
+            calcTotal();
         }
+    }
 
-        function loadConfig() {
-            const id = document.getElementById('selEstacion').value;
-            const est = estacionesData.find(e => (e.id || e.ID_Estacion) === id);
-            if (est) {
-                document.getElementById('dirAuto').value = est.direccion;
-                // Formatear crédito para el encabezado
-                document.getElementById('creditoHeader').innerText = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(est.credito);
-                calcTotal();
-            }
-        }
+    function calcTotal() {
+        const id = document.getElementById('selEstacion').value;
+        const type = document.getElementById('fuelType').value;
+        const qty = parseFloat(document.getElementById('fuelQty').value) || 0;
+        const est = estacionesData.find(e => (e.id || e.ID_Estacion) === id);
 
-        function calcTotal() {
-            const id = document.getElementById('selEstacion').value;
-            const type = document.getElementById('fuelType').value;
-            const qty = parseFloat(document.getElementById('fuelQty').value) || 0;
-            const est = estacionesData.find(e => (e.id || e.ID_Estacion) === id);
-
-            if (est) {
-                const precio = est.precios[type];
-                const total = precio * qty;
-                document.getElementById('finalTotal').innerText = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(total);
-                
-                const btn = document.getElementById('btnConfirm');
-                if (total > est.credito || total <= 0) {
-                    btn.disabled = true;
-                    btn.innerText = total > 0 ? "Crédito Insuficiente" : "Ingrese Cantidad";
-                    btn.classList.add('bg-slate-700');
-                    btn.classList.remove('bg-red-600');
-                } else {
-                    btn.disabled = false;
-                    btn.innerText = "Confirmar Orden";
-                    btn.classList.add('bg-red-600');
-                    btn.classList.remove('bg-slate-700');
-                }
-            }
-        }
-
-        document.getElementById('orderForm').onsubmit = async (e) => {
-            e.preventDefault();
+        if (est) {
+            const precio = est.precios[type];
+            const total = precio * qty;
+            document.getElementById('finalTotal').innerText = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(total);
+            
             const btn = document.getElementById('btnConfirm');
-            btn.disabled = true;
-            btn.innerText = "Procesando...";
-
-            try {
-                const userData = JSON.parse(localStorage.getItem('usuario'));
-                const idEstacion = document.getElementById('selEstacion').value;
-                const est = estacionesData.find(e => (e.id || e.ID_Estacion) === idEstacion);
-
-                const pedido = {
-                    estacion: est.nombre,
-                    combustible: document.getElementById('fuelType').value,
-                    litros: document.getElementById('fuelQty').value,
-                    total: document.getElementById('finalTotal').innerText,
-                    fecha_entrega: document.getElementById('deliveryDate').value,
-                    prioridad: document.getElementById('orderPriority').value,
-                    usuario: userData.nombre
-                };
-
-                const response = await fetch('/api/pedidos', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(pedido)
-                });
-
-                const resData = await response.json();
-                
-                if (resData.success) {
-                    alert('¡Pedido registrado con éxito!');
-                    document.getElementById('orderForm').reset();
-                    document.getElementById('finalTotal').innerText = "$0.00";
-                    togglePanel();
-                    sincronizar(); // Actualizar crédito tras pedido
-                } else {
-                    alert('Error al guardar pedido.');
-                }
-            } catch (error) {
-                console.error("Error:", error);
-                alert('No se pudo conectar con el servidor.');
-            } finally {
+            if (total > est.credito || total <= 0) {
+                btn.disabled = true;
+                btn.innerText = total > 0 ? "Crédito Insuficiente" : "Ingrese Cantidad";
+                btn.className = "w-full bg-slate-700 text-white p-5 rounded-2xl font-black text-lg shadow-xl cursor-not-allowed";
+            } else {
                 btn.disabled = false;
                 btn.innerText = "Confirmar Orden";
+                btn.className = "w-full bg-red-600 text-white p-5 rounded-2xl font-black text-lg shadow-xl hover:bg-red-700 active:scale-95 transition-all";
             }
-        };
-
-        function togglePanel() {
-            const p = document.getElementById('sidePanel');
-            const o = document.getElementById('overlay');
-            p.classList.toggle('translate-x-full');
-            o.classList.toggle('hidden');
-            setTimeout(() => o.classList.toggle('opacity-100'), 10);
         }
+    }
 
-        function logout() {
-            localStorage.clear();
-            window.location.href = '/login.html';
+    document.getElementById('orderForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('btnConfirm');
+        btn.disabled = true;
+        btn.innerText = "Procesando...";
+
+        try {
+            const userData = JSON.parse(localStorage.getItem('usuario'));
+            const idEstacion = document.getElementById('selEstacion').value;
+            const est = estacionesData.find(e => (e.id || e.ID_Estacion) === idEstacion);
+
+            const pedido = {
+                estacion: est.nombre || est.Nombre,
+                combustible: document.getElementById('fuelType').value,
+                litros: document.getElementById('fuelQty').value,
+                total: document.getElementById('finalTotal').innerText,
+                fecha_entrega: document.getElementById('deliveryDate').value,
+                prioridad: document.getElementById('orderPriority').value,
+                usuario: userData.nombre
+            };
+
+            const response = await fetch('/api/pedidos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(pedido)
+            });
+
+            const resData = await response.json();
+            
+            if (resData.success) {
+                alert('¡Pedido registrado con éxito!');
+                document.getElementById('orderForm').reset();
+                togglePanel();
+                sincronizar(); // Esto actualizará el crédito Y los pedidos recientes
+            } else {
+                alert('Error al guardar pedido.');
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            alert('No se pudo conectar con el servidor.');
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Confirmar Orden";
         }
+    };
 
-        window.onload = initDashboard;
-    </script>
+    function togglePanel() {
+        const p = document.getElementById('sidePanel');
+        const o = document.getElementById('overlay');
+        p.classList.toggle('translate-x-full');
+        o.classList.toggle('hidden');
+        setTimeout(() => o.classList.toggle('opacity-100'), 10);
+    }
+
+    function logout() {
+        localStorage.clear();
+        window.location.href = '/login.html';
+    }
+
+    window.onload = initDashboard;
+</script>
 </body>
 </html>
