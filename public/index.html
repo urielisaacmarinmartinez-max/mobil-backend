@@ -212,11 +212,16 @@
         }
 
         // NAVEGACIÓN
-        function irMisEstaciones() {
-            document.getElementById('dashboardView').classList.add('hidden');
-            document.getElementById('estacionesView').classList.remove('hidden');
-            dibujarEstaciones();
-        }
+        async function irMisEstaciones() {
+    // Si no hay datos, esperamos a que carguen
+    if (estacionesData.length === 0) {
+        await cargarEstaciones();
+    }
+    
+    document.getElementById('dashboardView').classList.add('hidden');
+    document.getElementById('estacionesView').classList.remove('hidden');
+    dibujarEstaciones();
+}
 
         function irDashboard() {
             document.getElementById('estacionesView').classList.add('hidden');
