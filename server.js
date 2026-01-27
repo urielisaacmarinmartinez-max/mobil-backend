@@ -22,6 +22,7 @@ const serviceAccountAuth = new JWT({
 const doc = new GoogleSpreadsheet('1GALSgq5RhFv103c307XYeNoorQ5gAzxFR1Q64XMGr7Q', serviceAccountAuth);
 
 // RUTA DE LOGIN
+// BUSCA ESTA SECCIÓN EN TU SERVER.JS Y REEMPLÁZALA:
 app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
     try {
@@ -29,10 +30,15 @@ app.post('/api/login', async (req, res) => {
         const sheet = doc.sheetsByTitle['Usuarios']; 
         const rows = await sheet.getRows();
         
-        const user = rows.find(r => 
-            r.get('email').toLowerCase() === email.toLowerCase() && 
-            r.get('password').toString() === password.toString()
-        );
+        // Buscamos al usuario ignorando filas vacías y asegurando que existan los datos
+        const user = rows.find(r => {
+            const rowEmail = r.get('email');
+            const rowPass = r.get('password');
+            
+            return rowEmail && rowPass && 
+                   rowEmail.toString().toLowerCase() === email.toLowerCase() && 
+                   rowPass.toString() === password.toString();
+        });
         
         if (user) {
             res.json({ 
