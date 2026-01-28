@@ -67,7 +67,12 @@ app.get('/api/estaciones', async (req, res) => {
         const estaciones = rowsEst.map(row => {
             const id = row.get('ID_Estacion') || '';
             // Buscamos los datos técnicos en la hoja de TIRILLAS
+            console.log(`Buscando ID: ${id} en TIRILLAS...`);
             const datosTirilla = rowsTir.find(t => t.get('ID_Estacion') === id);
+
+            if (!datosTirilla) {
+        console.log(`⚠️ No se encontró el ID ${id} en la hoja TIRILLAS`);
+    }
 
             return {
                 id: id,
@@ -81,22 +86,22 @@ app.get('/api/estaciones', async (req, res) => {
                 },
                 // Datos de la hoja TIRILLAS
                 capacidad: {
-                    extra: datosTirilla?.get('CAP_EXTRA') || 0,
-                    supreme: datosTirilla?.get('CAP_SUPREME') || 0,
-                    diesel: datosTirilla?.get('CAP_DIESEL') || 0
-                },
-                ventaPromedio: {
-                    extra: datosTirilla?.get('VTA_EXTRA') || 0,
-                    supreme: datosTirilla?.get('VTA_SUPREME') || 0,
-                    diesel: datosTirilla?.get('VTA_DIESEL') || 0
-                },
-                volumenActual: {
-                    extra: datosTirilla?.get('VOL_EXTRA') || 0,
-                    supreme: datosTirilla?.get('VOL_SUPREME') || 0,
-                    diesel: datosTirilla?.get('VOL_DIESEL') || 0
-                },
-                ultimaActualizacion: datosTirilla?.get('ULTIMA_ACTUALIZACION') || 'Sin fecha'
-            };
+        extra: Number(datosTirilla?.get('CAP_EXTRA')) || 0,
+        supreme: Number(datosTirilla?.get('CAP_SUPREME')) || 0,
+        diesel: Number(datosTirilla?.get('CAP_DIESEL')) || 0
+               },
+    ventaPromedio: {
+        extra: Number(datosTirilla?.get('VTA_EXTRA')) || 0,
+        supreme: Number(datosTirilla?.get('VTA_SUPREME')) || 0,
+        diesel: Number(datosTirilla?.get('VTA_DIESEL')) || 0
+    },
+    volumenActual: {
+        extra: Number(datosTirilla?.get('VOL_EXTRA')) || 0,
+        supreme: Number(datosTirilla?.get('VOL_SUPREME')) || 0,
+        diesel: Number(datosTirilla?.get('VOL_DIESEL')) || 0
+    },
+    ultimaActualizacion: datosTirilla?.get('ULTIMA_ACTUALIZACION') || 'Sin fecha'
+};
         });
         res.json(estaciones);
     } catch (error) {

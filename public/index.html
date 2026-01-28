@@ -542,17 +542,19 @@ function dibujarEstaciones() {
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-${renderFuelCard('EXTRA', 'emerald', est.cap_extra || 0, est.vol_extra || 0, est.vta_extra || 0)}
-${renderFuelCard('SUPREME', 'red', est.cap_supreme || 0, est.vol_supreme || 0, est.vta_supreme || 0)}
-${renderFuelCard('DIESEL', 'slate', est.cap_diesel || 0, est.vol_diesel || 0, est.vta_diesel || 0)}
-            </div>
+            div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            ${renderFuelCard('EXTRA', 'emerald', cap.extra || 0, vol.extra || 0, vta.extra || 0)}
+            ${renderFuelCard('SUPREME', 'red', cap.supreme || 0, vol.supreme || 0, vta.supreme || 0)}
+            ${Number(cap.diesel) > 0 
+                ? renderFuelCard('DIESEL', 'slate', cap.diesel || 0, vol.diesel || 0, vta.diesel || 0) 
+                : `<div class="bg-slate-50 rounded-3xl border border-dashed border-slate-200 flex items-center justify-center p-8 text-[8px] font-bold text-slate-300 uppercase">Sin Diesel</div>`}
+        </div>
 
-            <button onclick="abrirModalTirilla('${est.id}', '${est.nombre}')" 
-                    class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-sm uppercase hover:bg-blue-600 transition-all shadow-xl">
-                Actualizar Inventario
-            </button>
-        </div>`;
+        <button onclick="abrirModalTirilla('${est.id}', '${est.nombre}')" 
+                class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-sm uppercase hover:bg-blue-600 transition-all shadow-xl">
+            Actualizar Inventario
+        </button>
+    </div>`;
     }).join('');
 }
 
