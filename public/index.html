@@ -539,9 +539,10 @@ function dibujarEstaciones() {
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                ${renderFuelCard('EXTRA', 'emerald', 0, 0, 0)}
-                ${renderFuelCard('SUPREME', 'red', 0, 0, 0)}
-                ${renderFuelCard('DIESEL', 'slate', 0, 0, 0)}
+                // Dentro de dibujarEstaciones, cuando generas el HTML:
+${renderFuelCard('EXTRA', 'emerald', est.cap_extra || 0, est.vol_extra || 0, est.vta_extra || 0)}
+${renderFuelCard('SUPREME', 'red', est.cap_supreme || 0, est.vol_supreme || 0, est.vta_supreme || 0)}
+${renderFuelCard('DIESEL', 'slate', est.cap_diesel || 0, est.vol_diesel || 0, est.vta_diesel || 0)}
             </div>
 
             <button onclick="abrirModalTirilla('${est.id}', '${est.nombre}')" 
@@ -594,7 +595,7 @@ document.getElementById('tirillaForm').onsubmit = async (e) => {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
 
     try {
-        const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbyFAnF_-lTI7rL-K1DwRlqia9C2d1bGvEc9Xz1-KgompKw_h0_KVeki6vnQdjXPJcDe/exec'; 
+        const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbziNViPncsYB2lnnbCmIz7w7RBk0bJ0OfsM53oPC9VBFQNQ66bFr5zQz62yphwRymgW/exec'; 
 
         await fetch(URL_APPS_SCRIPT, {
             method: 'POST',
