@@ -743,9 +743,13 @@ async function renderizarPedidosLista(filtro = 'Todos') {
 
         // Dibujar los pedidos
         container.innerHTML = pedidos.map(p => {
-            const color = p.estatus === 'Pendiente' ? 'orange' : 
-                          p.estatus === 'En Ruta' ? 'purple' : 
-                          p.estatus === 'Entregado' ? 'emerald' : 'blue';
+            const config = {
+        'Pendiente': { color: 'orange', icono: 'fa-clock' },
+        'Aceptado':  { color: 'blue',   icono: 'fa-check-double' },
+        'En Ruta':   { color: 'purple', icono: 'fa-truck-fast' },
+        'Entregado': { color: 'emerald',icono: 'fa-check-circle' },
+        'Cancelado': { color: 'red',    icono: 'fa-ban' }
+    }[p.estatus] || { color: 'slate', icono: 'fa-box' };
 
             return `
             <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-all mb-4">
