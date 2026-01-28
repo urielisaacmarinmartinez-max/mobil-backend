@@ -126,6 +126,31 @@
         </header>
         <div id="estacionesCardsContainer" class="grid grid-cols-1 gap-8">
             </div>
+            <div id="pedidosView" class="hidden">
+    <header class="flex justify-between items-start mb-10">
+        <div>
+            <h1 class="text-4xl font-black tracking-tight text-slate-900">Mis Pedidos</h1>
+            <p class="text-slate-500 font-medium mt-1">Historial y seguimiento en tiempo real</p>
+        </div>
+        <div class="flex gap-4">
+            <button onclick="irDashboard()" class="bg-slate-100 text-slate-600 px-6 py-3 rounded-xl font-bold text-sm hover:bg-slate-200 transition-all">
+                <i class="fas fa-arrow-left mr-2"></i> Dashboard
+            </button>
+        </div>
+    </header>
+
+    <div class="flex gap-2 mb-8 overflow-x-auto pb-2 no-scrollbar">
+        <button onclick="filtrarPedidos('Todos')" class="filter-btn active bg-slate-900 text-white px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest">Todos</button>
+        <button onclick="filtrarPedidos('Pendiente')" class="filter-btn bg-white text-slate-400 border border-slate-100 px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-orange-50 hover:text-orange-500">Pendientes</button>
+        <button onclick="filtrarPedidos('Aceptado')" class="filter-btn bg-white text-slate-400 border border-slate-100 px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-blue-50 hover:text-blue-500">Aceptados</button>
+        <button onclick="filtrarPedidos('En Ruta')" class="filter-btn bg-white text-slate-400 border border-slate-100 px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-purple-50 hover:text-purple-500">En Ruta</button>
+        <button onclick="filtrarPedidos('Entregado')" class="filter-btn bg-white text-slate-400 border border-slate-100 px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-emerald-50 hover:text-emerald-500">Entregados</button>
+        <button onclick="filtrarPedidos('Cancelado')" class="filter-btn bg-white text-slate-400 border border-slate-100 px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-red-50 hover:text-red-500">Cancelados</button>
+    </div>
+
+    <div id="listaPedidosCompleta" class="grid grid-cols-1 gap-4">
+        </div>
+</div>
     </div>
 
     <div id="modalTirilla" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
