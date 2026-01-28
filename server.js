@@ -135,12 +135,23 @@ app.post('/api/pedidos', async (req, res) => {
 
 // 4. OBTENER PEDIDOS (DASHBOARD)
 app.get('/api/obtener-pedidos', async (req, res) => {
+    const { estaciones } = req.query;
     try {
         await doc.loadInfo();
         const sheet = doc.sheetsByTitle['Pedidos'];
         const rows = await sheet.getRows();
         
-        const pedidos = rows.reverse().slice(0, 6).map(row => ({
+        // Convertimos el string de estaciones en un array limpio
+        const listaPermitida = estaciones ? estaciones.split(',').map(e => e.trim()) : [];
+
+        // FILTRO: Solo pedidos de las estaciones del usuario (o todos si es Admin)
+        const filasFiltradas = rows.filter(row => {
+            if (estaciones === 'TODAS') return true;
+            return listaPermitida.includes(row.get('ESTACIÓN'));
+        });
+
+        // Formateamos solo los 6 más recientes de SU lista
+        const pedidos = filasFiltradas.reverse().slice(0, 6).map(row => ({
             fecha: row.get('FECHA DE REGISTRO'),
             estacion: row.get('ESTACIÓN'),
             producto: row.get('TIPO DE PRODUCTO'),
@@ -150,13 +161,14 @@ app.get('/api/obtener-pedidos', async (req, res) => {
         }));
 
         const estadisticas = {
-            pendientes: rows.filter(r => r.get('ESTATUS') === 'Pendiente').length,
-            enRuta: rows.filter(r => r.get('ESTATUS') === 'En Ruta').length,
-            entregados: rows.filter(r => r.get('ESTATUS') === 'Entregado').length // Nueva tercia
+            pendientes: filasFiltradas.filter(r => r.get('ESTATUS') === 'Pendiente').length,
+            enRuta: filasFiltradas.filter(r => r.get('ESTATUS') === 'En Ruta').length,
+            entregados: filasFiltradas.filter(r => r.get('ESTATUS') === 'Entregado').length
         };
 
         res.json({ pedidos, estadisticas });
     } catch (error) {
+        console.error("Error al obtener pedidos:", error);
         res.status(500).json({ pedidos: [], estadisticas: { pendientes: 0, enRuta: 0, entregados: 0 } });
     }
 });

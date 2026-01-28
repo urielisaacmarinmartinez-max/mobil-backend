@@ -225,7 +225,9 @@
     let estacionesBase = [];
 
     async function initDashboard() {
-        const userData = JSON.parse(localStorage.getItem('usuario'));
+        const user = JSON.parse(localStorage.getItem('usuario'));
+        const resp = await fetch(`/api/obtener-pedidos?estaciones=${user.estaciones}`);
+    const data = await resp.json();
         if (!userData) {
             window.location.href = '/login.html';
             return;
