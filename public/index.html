@@ -404,66 +404,51 @@
     // LÓGICA PARA EL MODAL DE TIRILLAS (PUNTO 2)
     // ==========================================
     function abrirModalTirilla(id, nombre) {
-        // Buscamos los datos actuales de esa estación para mostrarlos en los inputs
-        const est = estacionesData.find(e => (e.id || e.ID_ESTACION) === id);
-        
-        document.getElementById('modalEstacionId').value = id;
-        document.getElementById('modalEstacionNombre').innerText = nombre;
-        
-        // Pre-llenar los campos con lo que ya hay en la base de datos
-        document.getElementById('volExtra').value = est.VOL_EXTRA || 0;
-        document.getElementById('volSupreme').value = est.VOL_SUPREME || 0;
-        document.getElementById('volDiesel').value = est.VOL_DIESEL || 0;
-        
-        // Mostrar el modal quitando la clase 'hidden'
-        document.getElementById('modalTirilla').classList.remove('hidden');
-    }
+    const est = estacionesData.find(e => e.ID_ESTACION === id);
+    document.getElementById('modalEstacionId').value = id;
+    document.getElementById('modalEstacionNombre').innerText = nombre;
+    
+    // Pre-cargar valores actuales
+    document.getElementById('volExtra').value = est.VOL_EXTRA || '';
+    document.getElementById('volSupreme').value = est.VOL_SUPREME || '';
+    document.getElementById('volDiesel').value = est.VOL_DIESEL || '';
+    
+    document.getElementById('modalTirilla').classList.remove('hidden');
+}
 
-    function cerrarModalTirilla() {
-        document.getElementById('modalTirilla').classList.add('hidden');
-    }
+function cerrarModalTirilla() {
+    document.getElementById('modalTirilla').classList.add('hidden');
+}
 
-    // Escuchar cuando se da clic en "Guardar Tirilla"
-    document.getElementById('tirillaForm').onsubmit = async (e) => {
-        e.preventDefault();
-        
-        const id = document.getElementById('modalEstacionId').value;
-        const btn = e.target.querySelector('button[type="submit"]');
-        
-        // Datos a enviar al servidor/Excel
-        const datos = {
-            id_estacion: id,
-            vol_extra: document.getElementById('volExtra').value,
-            vol_supreme: document.getElementById('volSupreme').value,
-            vol_diesel: document.getElementById('volDiesel').value,
-            fecha_hora: new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' })
-        };
-
-        btn.disabled = true;
-        btn.innerText = "Guardando...";
-
-        try {
-            const response = await fetch('/api/actualizar-tirilla', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(datos)
-            });
-
-            if (response.ok) {
-                alert('Inventario y fecha actualizados con éxito');
-                cerrarModalTirilla();
-                sincronizar(); // Esto recarga los datos para que veas el cambio reflejado
-            } else {
-                alert('Error al guardar en el servidor');
-            }
-        } catch (error) {
-            console.error("Error:", error);
-            alert('No se pudo conectar con el servidor');
-        } finally {
-            btn.disabled = false;
-            btn.innerText = "Guardar Tirilla";
-        }
+document.getElementById('tirillaForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('modalEstacionId').value;
+    
+    const datos = {
+        id_estacion: id,
+        vol_extra: document.getElementById('volExtra').value,
+        vol_supreme: document.getElementById('volSupreme').value,
+        vol_diesel: document.getElementById('volDiesel').value,
+        fecha_hora: new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' })
     };
+
+    try {
+        const response = await fetch('/api/actualizar-tirilla', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datos)
+        });
+
+        if (response.ok) {
+            alert('Inventario actualizado correctamente');
+            cerrarModalTirilla();
+            sincronizar(); // Recarga los datos para ver los cambios
+        }
+    } catch (error) {
+        console.error("Error al actualizar:", error);
+        alert('Hubo un error al conectar con el servidor');
+    }
+};
 
     // ... (aquí sigue tu función togglePanel o window.onload)
     function togglePanel() {
@@ -500,54 +485,74 @@ function irDashboard() {
 function dibujarEstaciones() {
     const container = document.getElementById('estacionesCardsContainer');
     const userData = JSON.parse(localStorage.getItem('usuario'));
+    
+    // Obtenemos los IDs de las estaciones asignadas al usuario (ej: "EST_001")
     const misEstacionesIds = userData.estaciones.split(',').map(s => s.trim());
 
+    // Filtrar los datos que vienen del Excel (estacionesData)
     const filtradas = estacionesData.filter(est => {
-        const id = (est.id || est.ID_ESTACION);
-        return misEstacionesIds.includes(id);
+        // Buscamos coincidencia con ID_ESTACION o id
+        const idActual = est.ID_ESTACION || est.id || "";
+        return misEstacionesIds.includes(idActual);
     });
 
-    container.innerHTML = filtradas.map(est => `
+    if (filtradas.length === 0) {
+        container.innerHTML = '<p class="p-8 text-slate-400 italic text-center">No se encontraron datos para tus estaciones asignadas.</p>';
+        return;
+    }
+
+    container.innerHTML = filtradas.map(est => {
+        // Extraer valores con nombres exactos de tu Excel (image_054eb9.png)
+        const nombre = est.ESTACION || "Estación sin nombre";
+        const id = est.ID_ESTACION || "N/A";
+        const ultimaAct = est.ULTIMA_ACTUALIZACION || "SIN REGISTRO";
+
+        return `
         <div class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100 mb-6">
-            <div class="flex justify-between items-center mb-8">
+            <div class="flex justify-between items-start mb-8">
                 <div>
-                    <h2 class="text-2xl font-black text-slate-800">${est.ESTACION}</h2>
-                    <p class="text-[10px] font-bold text-blue-600 uppercase tracking-widest">
-                        Última Actualización: ${est.ULTIMA_ACTUALIZACION || 'Sin registro'}
+                    <h2 class="text-2xl font-black text-slate-800">${nombre}</h2>
+                    <p class="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-1">
+                        Última Actualización: ${ultimaAct}
                     </p>
                 </div>
-                <button onclick="abrirModalTirilla('${est.ID_ESTACION}', '${est.ESTACION}')" 
-                        class="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-blue-600 transition-all">
+                <button onclick="abrirModalTirilla('${id}', '${nombre}')" 
+                        class="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-blue-600 transition-all shadow-lg shadow-slate-200">
                     Actualizar Tirilla
                 </button>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 ${renderFuelCard('EXTRA', 'emerald', est.CAP_EXTRA, est.VOL_EXTRA, est.VTA_EXTRA)}
                 ${renderFuelCard('SUPREME', 'red', est.CAP_SUPREME, est.VOL_SUPREME, est.VTA_SUPREME)}
-                ${est.CAP_DIESEL > 0 ? renderFuelCard('DIESEL', 'slate', est.CAP_DIESEL, est.VOL_DIESEL, est.VTA_DIESEL) : 
+                ${Number(est.CAP_DIESEL) > 0 ? renderFuelCard('DIESEL', 'slate', est.CAP_DIESEL, est.VOL_DIESEL, est.VTA_DIESEL) : 
                 `<div class="bg-slate-50 rounded-3xl border border-dashed border-slate-200 flex items-center justify-center p-8 text-[10px] font-bold text-slate-300 uppercase">Sin Diesel</div>`}
             </div>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 }
 
 function renderFuelCard(label, color, cap, vol, vta) {
+    // Convertimos a número para evitar que aparezca "NaN" o "0" si el texto está vacío
+    const capacidad = Number(cap || 0).toLocaleString();
+    const volumen = Number(vol || 0).toLocaleString();
+    const venta = Number(vta || 0).toLocaleString();
+
     return `
         <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100">
             <p class="text-${color}-600 font-black text-center text-xs mb-4 uppercase tracking-widest border-b border-${color}-100 pb-2">${label}</p>
             <div class="grid grid-cols-2 gap-2 mb-4 text-center">
                 <div>
                     <p class="text-[8px] font-black text-slate-400 uppercase">Capacidad</p>
-                    <p class="text-xs font-bold text-slate-700">${Number(cap || 0).toLocaleString()} L</p>
+                    <p class="text-xs font-bold text-slate-700">${capacidad} L</p>
                 </div>
                 <div>
                     <p class="text-[8px] font-black text-slate-400 uppercase">Vta Prom.</p>
-                    <p class="text-xs font-bold text-slate-700">${Number(vta || 0).toLocaleString()} L</p>
+                    <p class="text-xs font-bold text-slate-700">${venta} L</p>
                 </div>
             </div>
             <div class="bg-white p-4 rounded-xl text-center shadow-sm">
                 <p class="text-[8px] font-black text-slate-400 uppercase mb-1">Volumen Actual</p>
-                <p class="text-2xl font-black text-slate-900">${Number(vol || 0).toLocaleString()} L</p>
+                <p class="text-2xl font-black text-slate-900">${volumen} L</p>
             </div>
         </div>`;
 }
