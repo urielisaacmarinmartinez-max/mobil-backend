@@ -135,22 +135,32 @@ app.post('/api/pedidos', async (req, res) => {
 
 // 4. OBTENER PEDIDOS (DASHBOARD)
 app.get('/api/obtener-pedidos', async (req, res) => {
-    const { estaciones } = req.query;
+    const { estaciones } = req.query; // Recibe los IDs, ej: "EST_004, EST_023"
+    
     try {
         await doc.loadInfo();
-        const sheet = doc.sheetsByTitle['Pedidos'];
-        const rows = await sheet.getRows();
+        const sheetPedidos = doc.sheetsByTitle['Pedidos'];
+        const sheetEst = doc.sheetsByTitle['Estaciones'];
         
-        // Convertimos el string de estaciones en un array limpio
-        const listaPermitida = estaciones ? estaciones.split(',').map(e => e.trim()) : [];
+        const rowsPedidos = await sheetPedidos.getRows();
+        const rowsEst = await sheetEst.getRows();
 
-        // FILTRO: Solo pedidos de las estaciones del usuario (o todos si es Admin)
-        const filasFiltradas = rows.filter(row => {
-            if (estaciones === 'TODAS') return true;
-            return listaPermitida.includes(row.get('ESTACIÓN'));
+        // 1. Creamos un mapa de ID -> Nombre (ej: "EST_001" -> "ALDIA DORADA")
+        const mapaNombres = {};
+        rowsEst.forEach(r => {
+            mapaNombres[r.get('ID_Estacion')] = r.get('Nombre');
         });
 
-        // Formateamos solo los 6 más recientes de SU lista
+        // 2. Creamos una lista de nombres de estaciones que el usuario tiene permitidas
+        const idsPermitidos = estaciones ? estaciones.split(',').map(e => e.trim()) : [];
+        const nombresPermitidos = idsPermitidos.map(id => mapaNombres[id]).filter(n => n);
+
+        // 3. Filtramos los pedidos comparando por el NOMBRE de la estación
+        const filasFiltradas = rowsPedidos.filter(row => {
+            if (estaciones === 'TODAS') return true;
+            return nombresPermitidos.includes(row.get('ESTACIÓN'));
+        });
+
         const pedidos = filasFiltradas.reverse().slice(0, 6).map(row => ({
             fecha: row.get('FECHA DE REGISTRO'),
             estacion: row.get('ESTACIÓN'),
