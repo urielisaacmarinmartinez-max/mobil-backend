@@ -486,50 +486,49 @@ function dibujarEstaciones() {
     const container = document.getElementById('estacionesCardsContainer');
     const userData = JSON.parse(localStorage.getItem('usuario'));
     
-    // IDs del usuario: ["EST_001", "EST_002"]
+    // IDs permitidos: ["EST_001", "EST_002"]
     const misEstacionesIds = userData.estaciones.split(',').map(s => s.trim());
 
-    // Filtrar TIRILLAS comparando con la hoja de Estaciones Base
+    // FILTRO DIRECTO: Comparamos ID_Estacion (Col A) con los IDs del usuario
     const filtradas = estacionesData.filter(est => {
-        const nombreExcel = est.ESTACION;
-        // Buscamos si el nombre en TIRILLAS coincide con el ID que tiene permitido el usuario
-        return misEstacionesIds.some(id => {
-            const base = estacionesBase.find(b => b.ID_Estacion === id);
-            return base && base.Nombre === nombreExcel;
-        });
+        // est.ID_Estacion es la nueva columna A que añadiste
+        return misEstacionesIds.includes(est.ID_Estacion);
     });
 
     if (filtradas.length === 0) {
-        container.innerHTML = `<div class="p-20 text-center text-slate-400">No se encontraron datos. Verifica que los nombres en la hoja TIRILLAS coincidan con la hoja Estaciones.</div>`;
+        container.innerHTML = `<div class="p-20 text-center text-slate-400 font-bold">No tienes estaciones asignadas o los IDs no coinciden.</div>`;
         return;
     }
 
     container.innerHTML = filtradas.map(est => {
-        // Buscar crédito en la hoja Estaciones (Columna G en tu imagen)
-        const infoBase = estacionesBase.find(b => b.Nombre === est.ESTACION);
-        const credito = infoBase ? Number(infoBase['Crédito Disponible'] || 0).toLocaleString('es-MX', {style:'currency', currency:'MXN'}) : '$0.00';
+        // El crédito sigue viniendo de la hoja Estaciones Base usando el ID
+        const baseInfo = estacionesBase.find(b => b.ID_Estacion === est.ID_Estacion);
+        const credito = baseInfo ? Number(baseInfo['Crédito Disponible'] || 0).toLocaleString('es-MX', {style:'currency', currency:'MXN'}) : '$0.00';
 
         return `
         <div class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100 mb-6">
-            <div class="flex justify-between items-start mb-8">
+            <div class="flex justify-between items-start mb-6">
                 <div>
+                    <span class="text-[10px] font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full mb-2 inline-block">${est.ID_Estacion}</span>
                     <h2 class="text-2xl font-black text-slate-800">${est.ESTACION}</h2>
-                    <p class="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-1">
-                        Última Actualización: ${est.ULTIMA_ACTUALIZACION || 'SIN REGISTRO'}
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                        ACTUALIZADO: ${est.ULTIMA_ACTUALIZACION || 'SIN REGISTRO'}
                     </p>
                 </div>
                 <div class="text-right">
-                    <p class="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Crédito Disp.</p>
+                    <p class="text-[8px] font-black text-slate-400 uppercase">Crédito Disp.</p>
                     <p class="text-xl font-black text-emerald-600">${credito}</p>
                 </div>
             </div>
+
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 ${renderFuelCard('EXTRA', 'emerald', est.CAP_EXTRA, est.VOL_EXTRA, est.VTA_EXTRA)}
                 ${renderFuelCard('SUPREME', 'red', est.CAP_SUPREME, est.VOL_SUPREME, est.VTA_SUPREME)}
                 ${Number(est.CAP_DIESEL) > 0 ? renderFuelCard('DIESEL', 'slate', est.CAP_DIESEL, est.VOL_DIESEL, est.VTA_DIESEL) : 
-                `<div class="bg-slate-50 rounded-3xl border border-dashed border-slate-200 flex items-center justify-center p-8 text-[8px] font-bold text-slate-300 uppercase tracking-widest">Sin Diesel</div>`}
+                `<div class="bg-slate-50 rounded-3xl border border-dashed border-slate-200 flex items-center justify-center p-8 text-[8px] font-bold text-slate-300 uppercase">Sin Diesel</div>`}
             </div>
-            <button onclick="abrirModalTirilla('${est.ESTACION}', '${est.ESTACION}')" 
+
+            <button onclick="abrirModalTirilla('${est.ID_Estacion}', '${est.ESTACION}')" 
                     class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl">
                 Actualizar Inventario
             </button>
@@ -565,23 +564,21 @@ function renderFuelCard(label, color, cap, vol, vta) {
 // --- LÓGICA DEL FORMULARIO DE ACTUALIZACIÓN (TU CÓDIGO CON MEJORAS) ---
 document.getElementById('tirillaForm').onsubmit = async (e) => {
     e.preventDefault();
-    const id = document.getElementById('modalEstacionId').value;
+    const idEstacion = document.getElementById('modalEstacionId').value;
     const btn = e.target.querySelector('button[type="submit"]');
     
     const datos = {
-        id_estacion: id, // Aquí viaja el nombre "ALDIA DORADA"
+        id_estacion: idEstacion, // Envía "EST_001"
         vol_extra: document.getElementById('volExtra').value,
         vol_supreme: document.getElementById('volSupreme').value,
-        vol_diesel: document.getElementById('volDiesel').value,
-        fecha_hora: new Date().toLocaleString('es-MX')
+        vol_diesel: document.getElementById('volDiesel').value
     };
 
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
 
     try {
-        // REEMPLAZA ESTO con tu URL de la aplicación web de Google Apps Script
-        const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbyFAnF_-lTI7rL-K1DwRlqia9C2d1bGvEc9Xz1-KgompKw_h0_KVeki6vnQdjXPJcDe/exec'; 
+        const URL_APPS_SCRIPT = 'Thttps://script.google.com/macros/s/AKfycbyFAnF_-lTI7rL-K1DwRlqia9C2d1bGvEc9Xz1-KgompKw_h0_KVeki6vnQdjXPJcDe/exec'; 
 
         await fetch(URL_APPS_SCRIPT, {
             method: 'POST',
@@ -590,10 +587,10 @@ document.getElementById('tirillaForm').onsubmit = async (e) => {
             body: JSON.stringify(datos)
         });
 
-        alert('¡Inventario actualizado con éxito! La hoja de cálculo se ha actualizado.');
+        alert('¡Inventario actualizado!');
         cerrarModalTirilla();
         
-        // Sincronizamos para que la plataforma lea los nuevos datos del Excel
+        // Refrescamos los datos
         if (typeof sincronizar === 'function') {
             await sincronizar(); 
         } else {
@@ -601,8 +598,7 @@ document.getElementById('tirillaForm').onsubmit = async (e) => {
         }
         
     } catch (error) {
-        console.error("Error al guardar:", error);
-        alert('Error de conexión con el servidor.');
+        alert('Error al conectar con el servidor.');
     } finally {
         btn.disabled = false;
         btn.innerText = "Guardar Tirilla";
