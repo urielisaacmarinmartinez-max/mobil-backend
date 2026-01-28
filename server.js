@@ -67,7 +67,7 @@ app.get('/api/estaciones', async (req, res) => {
         const estaciones = rowsEst.map(row => {
             const id = row.get('ID_Estacion') || '';
             // Buscamos los datos técnicos en la hoja de TIRILLAS
-            const datosTirilla = rowsTir.find(t => t.get('ESTACION') === id);
+            const datosTirilla = rowsTir.find(t => t.get('ID_Estacion') === id);
 
             return {
                 id: id,
