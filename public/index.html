@@ -222,6 +222,7 @@
 
     <script>
     let estacionesData = [];
+    let estacionesBase = [];
 
     async function initDashboard() {
         const userData = JSON.parse(localStorage.getItem('usuario'));
@@ -296,28 +297,33 @@
         }
     }
 
-    async function cargarEstaciones() {
-        try {
-            const response = await fetch('/api/estaciones');
-            estacionesData = await response.json();
-            
-            const select = document.getElementById('selEstacion');
-            const valorActual = select.value;
+   async function cargarEstaciones() {
+    try {
+        const response = await fetch('/api/estaciones');
+        const res = await response.json();
+        
+        // Separamos los datos del Excel
+        estacionesData = res.datos.TIRILLAS; // La hoja con VOL_EXTRA
+        estacionesBase = res.datos.Estaciones; // La hoja con Crédito
 
-            select.innerHTML = '<option value="">Seleccione Estación</option>';
-            
-            estacionesData.forEach(est => {
-                const option = document.createElement('option');
-                option.value = est.id || est.ID_Estacion; 
-                option.textContent = est.nombre || est.Nombre;
-                select.appendChild(option);
-            });
+        const select = document.getElementById('selEstacion');
+        const valorActual = select.value;
 
-            if (valorActual) select.value = valorActual;
-        } catch (e) {
-            console.error("Error cargando estaciones", e);
-        }
+        select.innerHTML = '<option value="">Seleccione Estación</option>';
+        
+        // Llenamos el select del Nuevo Pedido usando la base
+        estacionesBase.forEach(est => {
+            const option = document.createElement('option');
+            option.value = est.ID_Estacion; 
+            option.textContent = est.Nombre;
+            select.appendChild(option);
+        });
+
+        if (valorActual) select.value = valorActual;
+    } catch (e) {
+        console.error("Error cargando estaciones", e);
     }
+}
 
     function loadConfig() {
         const id = document.getElementById('selEstacion').value;
@@ -404,18 +410,19 @@
     // LÓGICA PARA EL MODAL DE TIRILLAS (PUNTO 2)
     // ==========================================
     function abrirModalTirilla(id, nombre) {
-    const est = estacionesData.find(e => e.ID_ESTACION === id);
+    // Buscamos en estacionesData usando la nueva columna ID_Estacion
+    const est = estacionesData.find(e => e.ID_Estacion === id);
     document.getElementById('modalEstacionId').value = id;
     document.getElementById('modalEstacionNombre').innerText = nombre;
     
-    // Pre-cargar valores actuales
-    document.getElementById('volExtra').value = est.VOL_EXTRA || '';
-    document.getElementById('volSupreme').value = est.VOL_SUPREME || '';
-    document.getElementById('volDiesel').value = est.VOL_DIESEL || '';
+    if (est) {
+        document.getElementById('volExtra').value = est.VOL_EXTRA || '';
+        document.getElementById('volSupreme').value = est.VOL_SUPREME || '';
+        document.getElementById('volDiesel').value = est.VOL_DIESEL || '';
+    }
     
     document.getElementById('modalTirilla').classList.remove('hidden');
 }
-
 function cerrarModalTirilla() {
     document.getElementById('modalTirilla').classList.add('hidden');
 }
@@ -578,7 +585,7 @@ document.getElementById('tirillaForm').onsubmit = async (e) => {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
 
     try {
-        const URL_APPS_SCRIPT = 'Thttps://script.google.com/macros/s/AKfycbyFAnF_-lTI7rL-K1DwRlqia9C2d1bGvEc9Xz1-KgompKw_h0_KVeki6vnQdjXPJcDe/exec'; 
+        const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbyFAnF_-lTI7rL-K1DwRlqia9C2d1bGvEc9Xz1-KgompKw_h0_KVeki6vnQdjXPJcDe/exec'; 
 
         await fetch(URL_APPS_SCRIPT, {
             method: 'POST',
