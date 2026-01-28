@@ -133,8 +133,8 @@
                 <p class="text-slate-500 font-medium mt-1">Historial y seguimiento en tiempo real</p>
             </div>
             <div class="flex gap-4">
-                <button onclick="irDashboard()" class="bg-slate-100 text-slate-600 px-6 py-3 rounded-xl font-bold text-sm hover:bg-slate-200 transition-all">
-                    <i class="fas fa-arrow-left mr-2"></i> Dashboard
+                <button onclick="irDashboard()" class="bg-slate-800 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg hover:bg-slate-700 transition-all">
+                <i class="fas fa-arrow-left mr-2"></i> Volver al Dashboard
                 </button>
             </div>
         </header>
@@ -702,15 +702,75 @@ function filtrarPedidos(estatus) {
     // Cambiar estilo de los botones de filtro
     const botones = document.querySelectorAll('.filter-btn');
     botones.forEach(btn => {
-        btn.classList.remove('active', 'bg-slate-900', 'text-white');
+        btn.classList.remove('bg-slate-900', 'text-white', 'active');
         btn.classList.add('bg-white', 'text-slate-400', 'border-slate-100');
     });
 
     // Resaltar el botón presionado (puedes ajustar esto según tu diseño)
-    event.currentTarget.classList.add('active', 'bg-slate-900', 'text-white');
+    const btnActivo = event.currentTarget;
+    btnActivo.classList.remove('bg-white', 'text-slate-400');
+    btnActivo.classList.add('bg-slate-900', 'text-white', 'active');
     
     renderizarPedidosLista(estatus);
 }
+
+async function renderizarPedidosLista(filtro = 'Todos') {
+    const container = document.getElementById('listaPedidosCompleta');
+    const userData = JSON.parse(localStorage.getItem('usuario'));
+    
+    // Mostrar un loader simple mientras carga
+    container.innerHTML = '<div class="p-10 text-center text-slate-400 animate-pulse font-bold uppercase text-xs tracking-widest">Filtrando pedidos...</div>';
+
+    try {
+        const response = await fetch(`/api/obtener-pedidos?estaciones=${encodeURIComponent(userData.estaciones)}`);
+        const data = await response.json();
+        let pedidos = data.pedidos || [];
+
+        // Aplicar el filtro lógico
+        if (filtro !== 'Todos') {
+            pedidos = pedidos.filter(p => p.estatus.toLowerCase() === filtro.toLowerCase());
+        }
+
+        // Si después de filtrar no hay nada, mostrar aviso (para que no quede en blanco)
+        if (pedidos.length === 0) {
+            container.innerHTML = `
+                <div class="bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] p-12 text-center">
+                    <i class="fas fa-folder-open text-slate-300 text-4xl mb-4"></i>
+                    <p class="text-slate-500 font-bold">No se encontraron pedidos con estatus "${filtro}"</p>
+                </div>`;
+            return;
+        }
+
+        // Dibujar los pedidos
+        container.innerHTML = pedidos.map(p => {
+            const color = p.estatus === 'Pendiente' ? 'orange' : 
+                          p.estatus === 'En Ruta' ? 'purple' : 
+                          p.estatus === 'Entregado' ? 'emerald' : 'blue';
+
+            return `
+            <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-all mb-4">
+                <div class="flex flex-wrap justify-between items-center gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="h-12 w-12 bg-${color}-50 text-${color}-600 rounded-2xl flex items-center justify-center text-xl">
+                            <i class="fas fa-truck-fast"></i>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-black uppercase text-${color}-600 tracking-widest">${p.estatus}</span>
+                            <h3 class="font-black text-slate-900 text-lg">${p.estacion}</h3>
+                            <p class="text-xs text-slate-400 font-bold uppercase">${p.producto} — ${p.litros} L</p>
+                        </div>
+                    </div>
+                    <button class="bg-slate-900 text-white px-5 py-3 rounded-xl font-black text-[10px] uppercase">Detalles</button>
+                </div>
+            </div>`;
+        }).join('');
+
+    } catch (e) {
+        console.error("Error:", e);
+        container.innerHTML = '<p class="text-red-500 text-center p-10 font-bold">Error al conectar con el servidor.</p>';
+    }
+}
+
     window.onload = initDashboard;
 </script>
 </body>
