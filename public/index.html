@@ -693,16 +693,19 @@ function irMisPedidos() {
     const estView = document.getElementById('estacionesView');
     const pedView = document.getElementById('pedidosView');
     
-    if(dash && estView && pedView) {
-        dash.classList.add('hidden');
-        estView.classList.add('hidden');
+    // Ocultamos TODO lo demás primero
+    if(dash) dash.classList.add('hidden');
+    if(estView) estView.classList.add('hidden');
+    
+    // Mostramos la vista de pedidos
+    if(pedView) {
         pedView.classList.remove('hidden');
-        
-        // Cargamos los pedidos con el filtro inicial "Todos"
+        // Importante: Renderizar solo una vez
         renderizarPedidosLista('Todos');
     }
-    window.scrollTo(0, 0);
-    renderizarPedidosLista('Todos');
+
+    // Subir al inicio de la página
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function filtrarPedidos(estatus) {
