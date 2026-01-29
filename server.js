@@ -162,6 +162,7 @@ app.get('/api/obtener-pedidos', async (req, res) => {
         });
 
         const pedidos = filasFiltradas.reverse().slice(0, 6).map(row => ({
+            id: row.get('FOLIO'), // <--- AHORA ENVIAMOS EL FOLIO COMO ID
             fecha: row.get('FECHA DE REGISTRO'),
             estacion: row.get('ESTACIÓN'),
             producto: row.get('TIPO DE PRODUCTO'),
@@ -208,6 +209,41 @@ app.post('/api/actualizar-tirilla', async (req, res) => {
     } catch (error) {
         console.error("Error al actualizar tirilla:", error);
         res.status(500).json({ success: false });
+    }
+});
+
+// 6. NUEVA RUTA: OBTENER DETALLE DE UN PEDIDO POR FOLIO
+app.get('/api/obtener-pedido-detallado', async (req, res) => {
+    const { id } = req.query; // Este 'id' será el FOLIO (ej: PED-101)
+    
+    try {
+        await doc.loadInfo();
+        const sheet = doc.sheetsByTitle['Pedidos'];
+        const rows = await sheet.getRows();
+        
+        // Buscamos la fila que coincida con el FOLIO
+        const p = rows.find(r => r.get('FOLIO') === id);
+        
+        if (p) {
+            res.json({
+                id: p.get('FOLIO'),
+                estacion: p.get('ESTACIÓN'),
+                estatus: p.get('ESTATUS'),
+                producto: p.get('TIPO DE PRODUCTO'),
+                litros: p.get('LITROS'),
+                orden: p.get('ORDEN'),
+                fletera: p.get('FLETERA'),
+                unidad: p.get('UNIDAD'),
+                placa1: p.get('PLACAS 1'),
+                operador: p.get('OPERADOR'),
+                eta: p.get('ETA')
+            });
+        } else {
+            res.status(404).json({ error: "Pedido no encontrado" });
+        }
+    } catch (error) {
+        console.error("Error al obtener detalle:", error);
+        res.status(500).json({ error: "Error interno del servidor" });
     }
 });
 
