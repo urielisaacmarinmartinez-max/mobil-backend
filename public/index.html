@@ -296,30 +296,35 @@
 
     function configurarInterfazPorRol(rol) {
     if (rol === 'Fletera') {
-        // 1. Ocultar botones que no corresponden (Usando el texto que contienen)
-        const enlaces = document.querySelectorAll('nav a, aside a'); // Ajusta al selector de tu menú
+        // 1. Ocultar botones no deseados de forma infalible
+        const enlaces = document.querySelectorAll('nav a, aside a'); 
         enlaces.forEach(link => {
-            const texto = link.innerText.toLowerCase();
+            const texto = link.innerText.trim().toLowerCase();
+            // Agregamos "estaciones" a la lista de eliminación
             if (texto.includes('estaciones') || texto.includes('créditos') || texto.includes('creditos')) {
-                link.style.display = 'none';
+                link.style.setProperty('display', 'none', 'important');
             }
         });
 
         // 2. Agregar nuevas opciones: Operadores y Unidades
         // Buscamos el contenedor del menú para inyectar los nuevos botones
-        const menuContainer = document.querySelector('nav') || document.getElementById('sidebarMenu'); 
+        const menuContainer = document.querySelector('nav div.space-y-2') || document.querySelector('nav');
         
         if (menuContainer) {
-            const nuevosItems = `
-                <a href="#" onclick="irOperadores()" class="flex items-center gap-3 px-6 py-4 text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all rounded-2xl group">
-                    <i class="fas fa-users-cog text-lg"></i>
-                    <span class="font-bold text-sm uppercase tracking-widest">Operadores</span>
-                </a>
-                <a href="#" onclick="irUnidades()" class="w-full flex items-center gap-4 p-4 text-slate-400 hover:bg-white/5 hover: text-white rounded-2xl transition-all fant-semibold text-left">
-                    <i class="fas fa-truck-moving text-lg"></i>
-                </a>
-            `;
-            menuContainer.insertAdjacentHTML('beforeend', nuevosItems);
+            // Eliminamos duplicados antes de insertar (por si se llama dos veces la función)
+            if (!document.getElementById('btn-operadores')) {
+                const nuevosItems = `
+                    <a href="#" id="btn-operadores" onclick="irOperadores()" class="flex items-center p-4 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl mb-2 transition-all">
+                        <span class="material-icons-outlined mr-3 text-[20px]">badge</span>
+                        <span class="font-bold">Operadores</span>
+                    </a>
+                    <a href="#" id="btn-unidades" onclick="irUnidades()" class="flex items-center p-4 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl mb-2 transition-all">
+                        <span class="material-icons-outlined mr-3 text-[20px]">local_shipping</span>
+                        <span class="font-bold">Unidades</span>
+                    </a>
+                `;
+                menuContainer.insertAdjacentHTML('beforeend', nuevosItems);
+            }
         }
     }
 }
