@@ -749,28 +749,39 @@ async function renderizarPedidosLista(filtro = 'Todos') {
         }
 
         // Dibujar los pedidos
-        container.innerHTML = pedidos.map(p => {
-            const color = p.estatus === 'Pendiente' ? 'orange' : 
-                          p.estatus === 'En Ruta' ? 'purple' : 
-                          p.estatus === 'Entregado' ? 'emerald' : 'blue';
+container.innerHTML = pedidos.map(p => {
+    // 1. Determinamos el color (Tu lógica que ya funciona)
+    const color = p.estatus === 'Pendiente' ? 'orange' : 
+                  p.estatus === 'En Ruta' ? 'purple' : 
+                  p.estatus === 'Entregado' ? 'emerald' : 
+                  p.estatus === 'Cancelado' ? 'red' : 'blue';
 
-            return `
-            <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-all mb-4">
-                <div class="flex flex-wrap justify-between items-center gap-4">
-                    <div class="flex items-center gap-4">
-                        <div class="h-12 w-12 bg-${color}-50 text-${color}-600 rounded-2xl flex items-center justify-center text-xl">
-                            <i class="fa-clock"></i>
-                        </div>
-                        <div>
-                            <span class="text-[10px] font-black uppercase text-${color}-600 tracking-widest">${p.estatus}</span>
-                            <h3 class="font-black text-slate-900 text-lg">${p.estacion}</h3>
-                            <p class="text-xs text-slate-400 font-bold uppercase">${p.producto} — ${p.litros} L</p>
-                        </div>
-                    </div>
-                    <button class="bg-slate-900 text-white px-5 py-3 rounded-xl font-black text-[10px] uppercase">Detalles</button>
+    // 2. Determinamos el icono de forma segura
+    let icono = 'fa-box'; // Icono por defecto
+    if (p.estatus === 'Pendiente') icono = 'fa-clock';
+    if (p.estatus === 'En Ruta')   icono = 'fa-truck-fast';
+    if (p.estatus === 'Entregado') icono = 'fa-check-circle';
+    if (p.estatus === 'Cancelado') icono = 'fa-ban';
+
+    return `
+    <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-all mb-4">
+        <div class="flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center gap-4">
+                <div class="h-12 w-12 bg-${color}-50 text-${color}-600 rounded-2xl flex items-center justify-center text-xl">
+                    <i class="far ${icono}"></i>
                 </div>
-            </div>`;
-        }).join('');
+                <div>
+                    <span class="text-[10px] font-black uppercase text-${color}-600 tracking-widest">${p.estatus}</span>
+                    <h3 class="font-black text-slate-900 text-lg uppercase">${p.estacion}</h3>
+                    <p class="text-xs text-slate-400 font-bold uppercase">${p.producto} — ${p.litros} L</p>
+                </div>
+            </div>
+            <button class="bg-[#1e293b] text-white px-5 py-3 rounded-xl font-black text-[10px] uppercase hover:bg-slate-700 transition-all">
+                Detalles
+            </button>
+        </div>
+    </div>`;
+}).join('');
 
     } catch (e) {
         console.error("Error:", e);
