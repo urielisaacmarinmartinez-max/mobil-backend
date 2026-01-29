@@ -28,23 +28,37 @@
                 <span class="font-black text-xl tracking-tighter text-white uppercase">MOBIL Pedidos</span>
             </div>
 
-            <nav class="space-y-1">
-    <button onclick="irDashboard()" class="w-full flex items-center gap-4 p-4 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-900/20">
-        <i class="fas fa-th-large"></i> Dashboard
-    </button>
-    
-    <button onclick="irMisEstaciones()" class="w-full flex items-center gap-4 p-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl transition-all font-semibold text-left">
-        <i class="fas fa-store"></i> Mis Estaciones
-    </button>
+            <nav class="space-y-2">
+    <a href="#" onclick="irDashboard()" class="flex items-center p-4 text-white bg-blue-600 rounded-xl mb-2 transition-all">
+        <span class="material-icons-outlined mr-3">dashboard</span>
+        <span class="font-bold">Dashboard</span>
+    </a>
 
-    <button onclick="irMisPedidos()" class="w-full flex items-center gap-4 p-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl transition-all font-semibold text-left">
-    <i class="fas fa-clipboard-list"></i> Mis Pedidos
-</button>
+    <a href="#" id="menu-estaciones" onclick="irEstaciones()" class="flex items-center p-4 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl mb-2 transition-all">
+        <span class="material-icons-outlined mr-3">storefront</span>
+        <span class="font-bold">Mis Estaciones</span>
+    </a>
+
+    <a href="#" onclick="irMisPedidos()" class="flex items-center p-4 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl mb-2 transition-all">
+        <span class="material-icons-outlined mr-3">assignment</span>
+        <span class="font-bold">Mis Pedidos</span>
+    </a>
+
+    <a href="#" id="menu-creditos" onclick="irCreditos()" class="flex items-center p-4 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl mb-2 transition-all">
+        <span class="material-icons-outlined mr-3">account_balance_wallet</span>
+        <span class="font-bold">Mis Créditos</span>
+    </a>
+
+    <a href="#" id="menu-operadores" onclick="irOperadores()" class="hidden flex items-center p-4 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl mb-2 transition-all">
+        <span class="material-icons-outlined mr-3">badge</span>
+        <span class="font-bold">Operadores</span>
+    </a>
+
+    <a href="#" id="menu-unidades" onclick="irUnidades()" class="hidden flex items-center p-4 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl mb-2 transition-all">
+        <span class="material-icons-outlined mr-3">local_shipping</span>
+        <span class="font-bold">Unidades</span>
+    </a>
 </nav>
-                <a href="#" class="flex items-center gap-4 p-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl transition-all font-semibold">
-                    <i class="fas fa-wallet"></i> Mis Créditos
-                </a>
-            </nav>
         </div>
 
         <div class="mt-auto p-8 border-t border-white/5">
@@ -294,39 +308,50 @@ configurarInterfazPorRol(userData.rol);
     }
 
     function configurarInterfazPorRol(rol) {
+    console.log("Configurando interfaz para rol:", rol);
+
     if (rol === 'Fletera') {
         // 1. OCULTAR "Mis Estaciones" y "Mis Créditos"
-        // Buscamos todos los enlaces y si contienen la palabra clave, los eliminamos del mapa
         const links = document.querySelectorAll('nav a');
         links.forEach(link => {
-            const contenido = link.textContent.toLowerCase();
-            if (contenido.includes('estaciones') || contenido.includes('créditos') || contenido.includes('creditos')) {
-                link.classList.add('hidden'); // Oculta usando Tailwind
-                link.style.display = 'none';   // Refuerzo con CSS puro
+            // Convertimos todo a minúsculas y quitamos espacios para comparar mejor
+            const texto = link.innerText.toLowerCase().trim();
+            
+            if (texto.includes('estaciones') || texto.includes('créditos') || texto.includes('creditos')) {
+                console.log("Ocultando enlace:", texto);
+                link.style.setProperty('display', 'none', 'important');
+                link.classList.add('hidden');
             }
         });
 
-        // 2. INSERTAR NUEVOS BOTONES (Diseño idéntico)
-        const menuContainer = document.querySelector('nav div.space-y-2') || document.querySelector('nav');
+        // 2. INSERTAR NUEVOS BOTONES (Diseño idéntico a tus originales)
+        // Buscamos el div contenedor que tiene la clase space-y-2 dentro del nav
+        const menuContainer = document.querySelector('nav .space-y-2') || document.querySelector('nav');
         
         if (menuContainer && !document.getElementById('btn-operadores')) {
+            // Usamos exactamente tus mismas clases de Tailwind
             const estiloClases = "flex items-center p-4 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl mb-2 transition-all";
             
             const nuevosItems = `
                 <a href="#" id="btn-operadores" onclick="irOperadores()" class="${estiloClases}">
-                    <span class="material-icons-outlined mr-3" style="font-size: 20px;">badge</span>
+                    <span class="material-icons-outlined mr-3">badge</span>
                     <span class="font-bold">Operadores</span>
                 </a>
                 <a href="#" id="btn-unidades" onclick="irUnidades()" class="${estiloClases}">
-                    <span class="material-icons-outlined mr-3" style="font-size: 20px;">local_shipping</span>
+                    <span class="material-icons-outlined mr-3">local_shipping</span>
                     <span class="font-bold">Unidades</span>
                 </a>
             `;
             menuContainer.insertAdjacentHTML('beforeend', nuevosItems);
         }
+
+        // 3. EXTRA: Ocultar secciones de inventario en el Dashboard
+        const gridInventario = document.querySelector('.grid-cols-1.md\\:grid-cols-3');
+        if (gridInventario && rol === 'Fletera') {
+            gridInventario.style.display = 'none';
+        }
     }
 }
-
     async function sincronizar() {
         const icon = document.getElementById('syncIcon');
         icon.classList.add('spin-anim'); 
