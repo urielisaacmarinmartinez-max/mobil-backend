@@ -304,32 +304,42 @@
     }
 
     // NUEVA FUNCIÓN: Dibuja los pedidos y actualiza contadores
-    async function cargarPedidosDashboard() {
-        try {
-            const userData = JSON.parse(localStorage.getItem('usuario'));
-const estacionesParam = encodeURIComponent(userData.estaciones);
-const response = await fetch(`/api/obtener-pedidos?estaciones=${estacionesParam}`);
-            const data = await response.json();
-            
-            // 1. Actualizar Contadores Superiores
-            const counters = document.querySelectorAll('h3.text-5xl');
-            if(counters.length >= 2) {
-                counters[0].innerText = data.estadisticas.pendientes; // Pedidos Pendientes
-                counters[1].innerText = data.estadisticas.enRuta;     // En Ruta
-            }
+async function cargarPedidosDashboard() {
+    try {
+        const userData = JSON.parse(localStorage.getItem('usuario'));
+        if (!userData) return; // Seguridad por si no hay sesión
 
-            // 2. Dibujar Tarjetas de Pedidos
-            const container = document.getElementById('pedidosContainer');
-            
-            if (!data.pedidos || data.pedidos.length === 0) {
-                container.innerHTML = '<p class="text-slate-400 italic">No hay pedidos recientes para mostrar.</p>';
-                return;
-            }
+        const estacionesParam = encodeURIComponent(userData.estaciones);
+        
+        // --- CAMBIO CLAVE AQUÍ: Agregamos &rol= al final de la URL ---
+        const response = await fetch(`/api/obtener-pedidos?estaciones=${estacionesParam}&rol=${userData.rol}`);
+        const data = await response.json();
+        
+        // 1. Actualizar Contadores Superiores
+        const counters = document.querySelectorAll('h3.text-5xl');
+        if(counters.length >= 2) {
+            // Usamos || 0 por seguridad si el servidor no devuelve datos
+            counters[0].innerText = data.estadisticas.pendientes || 0; 
+            counters[1].innerText = data.estadisticas.enRuta || 0;     
+        }
 
-            container.innerHTML = data.pedidos.map(p => `
+        // 2. Dibujar Tarjetas de Pedidos
+        const container = document.getElementById('pedidosContainer');
+        
+        if (!data.pedidos || data.pedidos.length === 0) {
+            container.innerHTML = '<p class="text-slate-400 italic">No hay pedidos recientes para mostrar.</p>';
+            return;
+        }
+
+        container.innerHTML = data.pedidos.map(p => {
+            // Determinamos el color dinámico según estatus (Opcional, pero mejora lo visual)
+            const colorClass = p.estatus === 'Pendiente' ? 'bg-orange-50 text-orange-600' : 
+                               p.estatus === 'En Ruta' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600';
+
+            return `
                 <div class="bg-white p-6 rounded-[2rem] card-shadow border border-slate-100 transition-all hover:scale-[1.02]">
                     <div class="flex justify-between items-start mb-4">
-                        <span class="px-3 py-1 ${p.estatus === 'Pendiente' ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'} text-[10px] font-black rounded-full uppercase tracking-wider">
+                        <span class="px-3 py-1 ${colorClass} text-[10px] font-black rounded-full uppercase tracking-wider">
                             ${p.estatus}
                         </span>
                         <p class="text-[10px] text-slate-400 font-bold">${p.fecha ? p.fecha.split(',')[0] : 'Reciente'}</p>
@@ -341,12 +351,13 @@ const response = await fetch(`/api/obtener-pedidos?estaciones=${estacionesParam}
                         <p class="font-black text-slate-900">${p.total}</p>
                     </div>
                 </div>
-            `).join('');
+            `;
+        }).join('');
 
-        } catch (e) {
-            console.error("Error al cargar pedidos en dashboard:", e);
-        }
+    } catch (e) {
+        console.error("Error al cargar pedidos en dashboard:", e);
     }
+}
 
    async function cargarEstaciones() {
     try {
