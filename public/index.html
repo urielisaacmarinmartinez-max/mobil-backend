@@ -540,13 +540,17 @@ function irMisEstaciones() {
     console.log("Cambiando a vista Estaciones...");
     const dash = document.getElementById('dashboardView');
     const estView = document.getElementById('estacionesView');
+    const pedView = document.getElementById('pedidosView');
     
-    if(dash && estView) {
+    if(dash && estView && pedView) {
         dash.classList.add('hidden');
-        estView.classList.remove('hidden');
-        dibujarEstaciones(); // Esta función genera las tarjetas
-    } else {
-        console.error("No se encontraron los contenedores de vista");
+        pedView.classList.add('hidden'); // Oculta pedidos
+        estView.classList.remove('hidden'); // Muestra estaciones
+        
+        // LIMPIEZA CLAVE: Borra el contenido de la lista de pedidos para que no use espacio
+        document.getElementById('listaPedidosCompleta').innerHTML = '';
+        
+        dibujarEstaciones(); 
     }
     window.scrollTo(0, 0);
 }
