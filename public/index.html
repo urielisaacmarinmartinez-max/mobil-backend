@@ -487,13 +487,31 @@ async function cargarPedidosDashboard() {
             const est = estacionesData.find(e => (e.id || e.ID_Estacion) === idEstacion);
 
             const pedido = {
+                folio: "MOB-" + Date.now(),
                 estacion: est.nombre || est.Nombre,
                 combustible: document.getElementById('fuelType').value,
                 litros: document.getElementById('fuelQty').value,
                 total: document.getElementById('finalTotal').innerText,
                 fecha_entrega: document.getElementById('deliveryDate').value,
                 prioridad: document.getElementById('orderPriority').value,
-                usuario: userData.nombre
+                estatus: 'Pendiente',
+                usuario: userData.nombre,
+
+                // Los campos 11 al 22 se envían vacíos inicialmente
+    confirmacion_reubicacion: '',
+    orden: '',
+    fletera: '',
+    unidad: '',
+    placa1: '',
+    placa2: '',
+    operador: '',
+    cantidad_exacta: '',
+    eta: '',
+    fecha_descarga: '',
+    factura: '',
+    compra: '',
+    cancelacion_pedido: '', // Vacío si no está cancelado
+    motivo_cancelacion: ''
             };
 
             const response = await fetch('/api/pedidos', {
