@@ -308,32 +308,35 @@ configurarInterfazPorRol(userData.rol);
     }
 
     function configurarInterfazPorRol(rol) {
+    // Si no es fletera, nos aseguramos de que todo se vea normal y salimos
+    if (rol !== 'Fletera') {
+        const todosLosLinks = document.querySelectorAll('nav a');
+        todosLosLinks.forEach(link => link.style.display = 'flex');
+        return; 
+    }
+
+    // --- LÓGICA SOLO PARA FLETERAS ---
     if (rol === 'Fletera') {
-        // 1. OCULTAR "Mis Estaciones" y "Mis Créditos" usando selectores de posición
-        // Esto es más seguro que buscar por texto
-        const menuLinks = document.querySelectorAll('nav a');
-        
-        menuLinks.forEach(link => {
+        const links = document.querySelectorAll('nav a');
+        links.forEach(link => {
             const texto = link.innerText.toLowerCase();
-            // Si el enlace contiene estas palabras, lo fulminamos
+            // Solo ocultamos estos dos específicamente
             if (texto.includes('estaciones') || texto.includes('créditos') || texto.includes('creditos')) {
                 link.style.setProperty('display', 'none', 'important');
             }
         });
 
-        // 2. INSERTAR NUEVOS BOTONES (Con la estructura de iconos correcta)
+        // Insertar botones de Operadores/Unidades solo si no existen
         const menuContainer = document.querySelector('nav .space-y-2') || document.querySelector('nav');
-        
         if (menuContainer && !document.getElementById('btn-operadores')) {
-            // Clases exactas de tus botones de Mis Pedidos
-            const clasesBotones = "flex items-center p-4 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl mb-2 transition-all";
+            const estiloFijo = "flex items-center p-4 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl mb-2 transition-all";
             
             const htmlNuevos = `
-                <a href="#" id="btn-operadores" onclick="irOperadores()" class="${clasesBotones}">
+                <a href="#" id="btn-operadores" onclick="irOperadores()" class="${estiloFijo}">
                     <span class="material-icons-outlined mr-3">badge</span>
                     <span class="font-bold">Operadores</span>
                 </a>
-                <a href="#" id="btn-unidades" onclick="irUnidades()" class="${clasesBotones}">
+                <a href="#" id="btn-unidades" onclick="irUnidades()" class="${estiloFijo}">
                     <span class="material-icons-outlined mr-3">local_shipping</span>
                     <span class="font-bold">Unidades</span>
                 </a>
