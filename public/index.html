@@ -28,37 +28,23 @@
                 <span class="font-black text-xl tracking-tighter text-white uppercase">MOBIL Pedidos</span>
             </div>
 
-            <nav class="space-y-2">
-    <a href="#" onclick="irDashboard()" class="flex items-center p-4 text-white bg-blue-600 rounded-xl mb-2 transition-all">
-        <span class="material-icons-outlined mr-3">dashboard</span>
-        <span class="font-bold">Dashboard</span>
-    </a>
+            <nav class="space-y-1">
+    <button onclick="irDashboard()" class="w-full flex items-center gap-4 p-4 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-900/20">
+        <i class="fas fa-th-large"></i> Dashboard
+    </button>
+    
+    <button onclick="irMisEstaciones()" class="w-full flex items-center gap-4 p-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl transition-all font-semibold text-left">
+        <i class="fas fa-store"></i> Mis Estaciones
+    </button>
 
-    <a href="#" id="menu-estaciones" onclick="irEstaciones()" class="flex items-center p-4 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl mb-2 transition-all">
-        <span class="material-icons-outlined mr-3">storefront</span>
-        <span class="font-bold">Mis Estaciones</span>
-    </a>
-
-    <a href="#" onclick="irMisPedidos()" class="flex items-center p-4 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl mb-2 transition-all">
-        <span class="material-icons-outlined mr-3">assignment</span>
-        <span class="font-bold">Mis Pedidos</span>
-    </a>
-
-    <a href="#" id="menu-creditos" onclick="irCreditos()" class="flex items-center p-4 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl mb-2 transition-all">
-        <span class="material-icons-outlined mr-3">account_balance_wallet</span>
-        <span class="font-bold">Mis Créditos</span>
-    </a>
-
-    <a href="#" id="menu-operadores" onclick="irOperadores()" class="hidden flex items-center p-4 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl mb-2 transition-all">
-        <span class="material-icons-outlined mr-3">badge</span>
-        <span class="font-bold">Operadores</span>
-    </a>
-
-    <a href="#" id="menu-unidades" onclick="irUnidades()" class="hidden flex items-center p-4 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl mb-2 transition-all">
-        <span class="material-icons-outlined mr-3">local_shipping</span>
-        <span class="font-bold">Unidades</span>
-    </a>
+    <button onclick="irMisPedidos()" class="w-full flex items-center gap-4 p-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl transition-all font-semibold text-left">
+    <i class="fas fa-clipboard-list"></i> Mis Pedidos
+</button>
 </nav>
+                <a href="#" class="flex items-center gap-4 p-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl transition-all font-semibold">
+                    <i class="fas fa-wallet"></i> Mis Créditos
+                </a>
+            </nav>
         </div>
 
         <div class="mt-auto p-8 border-t border-white/5">
@@ -293,58 +279,52 @@
             window.location.href = '/login.html';
             return;
         }
-configurarInterfazPorRol(userData.rol);
-
-        await cargarEstaciones();
-        await cargarPedidosDashboard();
 
         document.getElementById('userName').innerText = userData.nombre;
         document.getElementById('welcomeMsg').innerText = `Hola, ${userData.nombre.split(' ')[0]}`;
         document.getElementById('userStation').innerText = userData.estaciones;
         document.getElementById('userInitials').innerText = userData.nombre.substring(0, 2);
 
+        configurarInterfazPorRol(userData.rol);
+
+        await cargarEstaciones();
+        await cargarPedidosDashboard(); // <--- Carga los pedidos al iniciar
+
         // ACTUALIZACIÓN AUTOMÁTICA CADA 30 SEGUNDOS
         setInterval(sincronizar, 30000);
     }
 
     function configurarInterfazPorRol(rol) {
-    // Si no es fletera, nos aseguramos de que todo se vea normal y salimos
-    if (rol !== 'Fletera') {
-        const todosLosLinks = document.querySelectorAll('nav a');
-        todosLosLinks.forEach(link => link.style.display = 'flex');
-        return; 
-    }
-
-    // --- LÓGICA SOLO PARA FLETERAS ---
     if (rol === 'Fletera') {
-        const links = document.querySelectorAll('nav a');
-        links.forEach(link => {
+        // 1. Ocultar botones que no corresponden (Usando el texto que contienen)
+        const enlaces = document.querySelectorAll('nav a, aside a'); // Ajusta al selector de tu menú
+        enlaces.forEach(link => {
             const texto = link.innerText.toLowerCase();
-            // Solo ocultamos estos dos específicamente
             if (texto.includes('estaciones') || texto.includes('créditos') || texto.includes('creditos')) {
-                link.style.setProperty('display', 'none', 'important');
+                link.style.display = 'none';
             }
         });
 
-        // Insertar botones de Operadores/Unidades solo si no existen
-        const menuContainer = document.querySelector('nav .space-y-2') || document.querySelector('nav');
-        if (menuContainer && !document.getElementById('btn-operadores')) {
-            const estiloFijo = "flex items-center p-4 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl mb-2 transition-all";
-            
-            const htmlNuevos = `
-                <a href="#" id="btn-operadores" onclick="irOperadores()" class="${estiloFijo}">
-                    <span class="material-icons-outlined mr-3">badge</span>
-                    <span class="font-bold">Operadores</span>
+        // 2. Agregar nuevas opciones: Operadores y Unidades
+        // Buscamos el contenedor del menú para inyectar los nuevos botones
+        const menuContainer = document.querySelector('nav') || document.getElementById('sidebarMenu'); 
+        
+        if (menuContainer) {
+            const nuevosItems = `
+                <a href="#" onclick="irOperadores()" class="flex items-center gap-3 px-6 py-4 text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all rounded-2xl group">
+                    <i class="fas fa-users-cog text-lg"></i>
+                    <span class="font-bold text-sm uppercase tracking-widest">Operadores</span>
                 </a>
-                <a href="#" id="btn-unidades" onclick="irUnidades()" class="${estiloFijo}">
-                    <span class="material-icons-outlined mr-3">local_shipping</span>
-                    <span class="font-bold">Unidades</span>
+                <a href="#" onclick="irUnidades()" class="w-full flex items-center gap-4 p-4 text-slate-400 hover:bg-white/5 hover: text-white rounded-2xl transition-all fant-semibold text-left">
+                    <i class="fas fa-truck-moving text-lg"></i>
+                    <span class="font-bold text-sm uppercase tracking-widest">Unidades</span>
                 </a>
             `;
-            menuContainer.insertAdjacentHTML('beforeend', htmlNuevos);
+            menuContainer.insertAdjacentHTML('beforeend', nuevosItems);
         }
     }
 }
+
     async function sincronizar() {
         const icon = document.getElementById('syncIcon');
         icon.classList.add('spin-anim'); 
