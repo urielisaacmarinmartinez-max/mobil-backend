@@ -41,9 +41,9 @@
     <i class="fas fa-clipboard-list"></i> Mis Pedidos
 </button>
 </nav>
-                <a href="#" class="flex items-center gap-4 p-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl transition-all font-semibold">
+                <button onclick="irMisCréditos()" class="flex items-center gap-4 p-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl transition-all font-semibold">
                     <i class="fas fa-wallet"></i> Mis Créditos
-                </a>
+                </button>
             </nav>
         </div>
 
@@ -897,7 +897,7 @@ async function verDetallePedido(id) {
         } else {
             areaLogistica.classList.add('hidden');
         }
-
+        
         // Datos de Transporte (Aquí usamos tus nuevas columnas)
         document.getElementById('det_fletera').textContent = p.fletera || 'ESPERANDO ASIGNACIÓN...';
         
