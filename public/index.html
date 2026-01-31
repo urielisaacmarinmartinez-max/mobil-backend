@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POLICON Pedidos | Dashboard</title>
+    <title>MOBIL Pedidos | Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -25,7 +25,7 @@
                 <div class="h-10 w-10 bg-red-600 rounded-xl flex items-center justify-center text-white shadow-lg">
                     <i class="fas fa-gas-pump"></i>
                 </div>
-                <span class="font-black text-xl tracking-tighter text-white uppercase">POLICON Pedidos</span>
+                <span class="font-black text-xl tracking-tighter text-white uppercase">MOBIL Pedidos</span>
             </div>
 
             <nav class="space-y-1">
@@ -84,10 +84,9 @@
     </button>
 </div>
 
-<button onclick="togglePanel()" class="hidden lg:flex ..."> + Nuevo Pedido </button>
-    
+<button onclick="togglePanel()" class="hidden lg:flex ..."> + Nuevo Pedido </button>    
             </div>
-            <button onclick="togglePanel()" class="hidden lg:block bg-red-600 text-white px-8 py-4 rounded-2xl font-bold shadow-xl shadow-red-200 hover:scale-105 active:scale-95 transition-all">
+            <button onclick="togglePanel()" class="bg-red-600 text-white px-8 py-4 rounded-2xl font-bold shadow-xl shadow-red-200 hover:scale-105 active:scale-95 transition-all">
                 + Nuevo Pedido
             </button>
         </header>
@@ -1104,8 +1103,7 @@ window.onload = initDashboard;
     </div>
 </div>
 
-<nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 pb-5 pt-3 z-[100] shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
-    <div class="max-w-md mx-auto flex justify-around items-center px-2">
+<nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-6 py-3 flex justify-between items-center z-[100] shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
     
     <button onclick="irDashboard()" class="flex flex-col items-center gap-1 text-blue-600">
         <i class="fas fa-th-large text-lg"></i>
