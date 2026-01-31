@@ -493,43 +493,54 @@ async function cargarPedidosDashboard() {
     }
 
     document.getElementById('orderForm').onsubmit = async (e) => {
-        e.preventDefault();
-        const btn = document.getElementById('btnConfirm');
-        btn.disabled = true;
-        btn.innerText = "Procesando...";
+    e.preventDefault();
+    const btn = document.getElementById('btnConfirm');
+    btn.disabled = true;
+    btn.innerText = "Procesando...";
 
-        try {
-            const userData = JSON.parse(localStorage.getItem('usuario'));
-            const idEstacion = document.getElementById('selEstacion').value;
-            const est = estacionesData.find(e => (e.id || e.ID_Estacion) === idEstacion);
+    try {
+        const userData = JSON.parse(localStorage.getItem('usuario'));
+        const idEstacion = document.getElementById('selEstacion').value;
+        const est = estacionesData.find(e => (e.id || e.ID_Estacion) === idEstacion);
 
-           const pedido = {
-                folio: "MOB-" + Date.now(),
-                estacion: est.nombre || est.Nombre,
-                combustible: document.getElementById('fuelType').value,
-                litros: document.getElementById('fuelQty').value,
-                total: document.getElementById('finalTotal').innerText,
-                fecha_entrega: document.getElementById('deliveryDate').value,
-                prioridad: document.getElementById('orderPriority').value,
-                estatus: 'Pendiente',
-                usuario: userData.nombre,
+        // 1. SOLUCIÓN A LA HORA: Forzamos Zona Horaria México (CST)
+        const fechaHoy = new Date();
+        const fechaRegistro = fechaHoy.toLocaleString('es-MX', { 
+            timeZone: 'America/Mexico_City',
+            hour12: true 
+        });
 
-                // Los campos 11 al 22 se envían vacíos inicialmente
-    confirmacion_reubicacion: '',
-    orden: '',
-    fletera: '',
-    unidad: '',
-    placa1: '',
-    placa2: '',
-    operador: '',
-    cantidad_exacta: '',
-    eta: '',
-    fecha_descarga: '',
-    factura: '',
-    compra: '',
-    cancelacion_pedido: '', // Vacío si no está cancelado
-    motivo_cancelacion: ''
-};
+        // 2. GENERACIÓN DE FOLIO: Usamos un formato más limpio
+        const folioAuto = "MOB-" + Date.now().toString().slice(-6);
+
+        // 3. OBJETO CON TUS 24 COLUMNAS EXACTAS (Mayúsculas y Acentos)
+        const pedido = {
+            "FOLIO": folioAuto,
+            "FECHA DE REGISTRO": fechaRegistro,
+            "ESTACIÓN": est.nombre || est.Nombre,
+            "TIPO DE PRODUCTO": document.getElementById('fuelType').value,
+            "LITROS": document.getElementById('fuelQty').value,
+            "TOTAL": document.getElementById('finalTotal').innerText,
+            "FECHA DE ENTREGA": document.getElementById('deliveryDate').value,
+            "PRIORIDAD": document.getElementById('orderPriority').value,
+            "ESTATUS": 'Pendiente',
+            "USUARIO": userData.nombre,
+            "CONFIRMACIÓN O REUBICACIÓN": '',
+            "ORDEN": '',
+            "FLETERA": '',
+            "UNIDAD": '',
+            "PLACA 1": '',
+            "PLACA 2": '',
+            "OPERADOR": '',
+            "CANTIDAD EXACTA": '',
+            "ETA": '',
+            "FECHA DE DESCARGA": '',
+            "FACTURA": '',
+            "COMPRA": '',
+            "CANCELACIÓN DE PEDIDO": '',
+            "MOTIVO DE CANCELACIÓN": ''
+        };
+
 
             const response = await fetch('/api/pedidos', {
                 method: 'POST',
