@@ -766,7 +766,7 @@ document.getElementById('tirillaForm').onsubmit = async (e) => {
 
         await fetch(URL_APPS_SCRIPT, {
             method: 'POST',
-            mode: 'no-cors', 
+            mode: 'res.success', 
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(datos)
         });
