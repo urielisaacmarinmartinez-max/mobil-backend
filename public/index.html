@@ -511,33 +511,25 @@ async function cargarPedidosDashboard() {
 
         // --- SOLUCIÓN FOLIO ---
         // Lo guardamos en una variable minúscula para que tu servidor lo acepte
+       // --- SOLUCIÓN FOLIO Y HORA ---
         const folioGenerado = "MOB-" + Math.floor(100000 + Math.random() * 900000);
+        const fechaMX = new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City', hour12: true });
 
         const pedido = {
-    folio: "MOB-" + Date.now(),
-    fecha_registro: new Date().toLocaleString('es-MX'),
-    estacion: est.nombre || est.Nombre,
-    combustible: document.getElementById('fuelType').value,
-    litros: document.getElementById('fuelQty').value,
-    total: document.getElementById('finalTotal').innerText,
-    fecha_programada: document.getElementById('deliveryDate').value,
-    prioridad: document.getElementById('orderPriority').value,
-    estatus: 'Pendiente',
-    usuario: userData.nombre, // <--- ASEGÚRATE DE QUE ESTA COMA ESTÉ AQUÍ
-    confirmacion_reubicacion: '', 
-    orden: '',
-    fletera: '',
-    unidad: '',
-    placa1: '',
-    placa2: '',
-    operador: '',
-    cantidad_exacta: '',
-    eta: '',
-    fecha_descarga: '',
-    factura: '',
-    compra: '',
-    cancelacion_pedido: '',
-    motivo_cancelacion: ''
+            id_estacion: idEstacion, // <-- ESTO ES LO QUE LE DA VIDA A LAS TIRILLAS
+            folio: folioGenerado,
+            fecha_registro: fechaMX,
+            estacion: est.nombre || est.Nombre,
+            combustible: document.getElementById('fuelType').value,
+            litros: document.getElementById('fuelQty').value,
+            total: document.getElementById('finalTotal').innerText,
+            fecha_entrega: document.getElementById('deliveryDate').value,
+            prioridad: document.getElementById('orderPriority').value,
+            estatus: 'Pendiente',
+            usuario: userData.nombre,
+            // Campos extra para mantener las 24 columnas si tu Excel lo requiere
+            c11: "", c12: "", c13: "", c14: "", c15: "", c16: "", 
+            c17: "", c18: "", c19: "", c20: "", c21: "", c22: "", c23: "", c24: ""
         };
 
 
