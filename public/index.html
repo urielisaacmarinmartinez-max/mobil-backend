@@ -563,15 +563,17 @@ async function cargarPedidosDashboard() {
     // LÓGICA PARA EL MODAL DE TIRILLAS (PUNTO 2)
     // ==========================================
     function abrirModalTirilla(id, nombre) {
-    // Buscamos en estacionesData usando la nueva columna ID_Estacion
-    const est = estacionesData.find(e => e.ID_Estacion === id);
+    // Buscamos de forma flexible para evitar errores de propiedad
+    const est = estacionesData.find(e => (e.id === id || e.ID_Estacion === id));
+    
     document.getElementById('modalEstacionId').value = id;
     document.getElementById('modalEstacionNombre').innerText = nombre;
     
     if (est) {
-        document.getElementById('volExtra').value = est.VOL_EXTRA || '';
-        document.getElementById('volSupreme').value = est.VOL_SUPREME || '';
-        document.getElementById('volDiesel').value = est.VOL_DIESEL || '';
+        // Asegúrate de que los IDs coincidan con los del HTML (volExtra, volSupreme, etc.)
+        document.getElementById('volExtra').value = est.vol_extra || est.VOL_EXTRA || '';
+        document.getElementById('volSupreme').value = est.vol_supreme || est.VOL_SUPREME || '';
+        document.getElementById('volDiesel').value = est.vol_diesel || est.VOL_DIESEL || '';
     }
     
     document.getElementById('modalTirilla').classList.remove('hidden');
@@ -582,6 +584,7 @@ function cerrarModalTirilla() {
 
 document.getElementById('tirillaForm').onsubmit = async (e) => {
     e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
     const id = document.getElementById('modalEstacionId').value;
     
     const datos = {
@@ -592,21 +595,30 @@ document.getElementById('tirillaForm').onsubmit = async (e) => {
         fecha_hora: new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' })
     };
 
+    btn.disabled = true;
+    btn.innerHTML = 'Guardando...';
+
     try {
-        const response = await fetch('/api/actualizar-tirilla', {
+        // Usa la ruta que corresponda a tu servidor actual
+        const response = await fetch('/api/actualizar-tirilla', { 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(datos)
         });
 
         if (response.ok) {
-            alert('Inventario actualizado correctamente');
+            alert('¡Inventario actualizado!');
             cerrarModalTirilla();
-            sincronizar(); // Recarga los datos para ver los cambios
+            if (typeof sincronizar === 'function') await sincronizar();
+        } else {
+            throw new Error("Error en servidor");
         }
     } catch (error) {
-        console.error("Error al actualizar:", error);
-        alert('Hubo un error al conectar con el servidor');
+        console.error(error);
+        alert('Error al conectar con el servidor.');
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Guardar Tirilla";
     }
 };
 
