@@ -683,11 +683,7 @@ async function cargarPedidosDashboard() {
 
         container.innerHTML = filtradas.map(est => {
             const cap = est.capacidad || { extra: 0, supreme: 0, diesel: 0 };
-            const vol = {
-                extra: est.vol_extra || est.VOL_EXTRA || 0,
-                supreme: est.vol_supreme || est.VOL_SUPREME || 0,
-                diesel: est.vol_diesel || est.VOL_DIESEL || 0
-            };
+            const vol = est.volumenActual || { extra: 0, supreme: 0, diesel: 0 };
             const vta = est.ventaPromedio || { extra: 0, supreme: 0, diesel: 0 };
             
             return `
