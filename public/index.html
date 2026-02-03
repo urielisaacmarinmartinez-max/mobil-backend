@@ -531,8 +531,7 @@ async function cargarPedidosDashboard() {
             if (resData.success) {
                 alert('¡Pedido registrado con éxito!');
                 document.getElementById('orderForm').reset();
-                togglePanel();
-                sincronizar(); // Esto actualizará el crédito Y los pedidos recientes
+                location.reload();
             } else {
                 alert('Error al guardar pedido.');
             }
