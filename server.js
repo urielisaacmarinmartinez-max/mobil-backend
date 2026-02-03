@@ -110,12 +110,12 @@ app.post('/api/pedidos', async (req, res) => {
         await doc.loadInfo();
         const sheet = doc.sheetsByTitle['Pedidos']; 
         
-        // ASEGURAMOS QUE LA FECHA SEA MX SIEMPRE
+        // El servidor usa la fecha enviada por el celular o genera una de respaldo en formato MX
         const fechaFinal = pedido.fecha_registro || new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' });
 
         await sheet.addRow({
-            'FECHA DE REGISTRO': fechaFinal,
             'FOLIO': pedido.folio,
+            'FECHA DE REGISTRO': fechaFinal,
             'ESTACIÓN': pedido.estacion,
             'TIPO DE PRODUCTO': pedido.combustible,
             'LITROS': pedido.litros,
@@ -127,8 +127,8 @@ app.post('/api/pedidos', async (req, res) => {
         });
         res.json({ success: true });
     } catch (error) {
-        console.error("Error al guardar pedido:", error);
-        res.status(500).json({ success: false });
+        console.error("Error al guardar en Sheets:", error);
+        res.status(500).json({ success: false, message: error.message });
     }
 });
 
