@@ -590,8 +590,10 @@ document.getElementById('tirillaForm').onsubmit = async (e) => {
     e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
     const idEstacion = document.getElementById('modalEstacionId').value;
+
+    const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbwiTjejEmBqcd0kHG4kbboYH4eWKwIVy95eTaj_qzPQILLaCTHbkx-uZBqLLMgHIMvw/exec';
     
-    // Preparamos los datos asegurando que sean números
+    
     const datos = {
         id_estacion: idEstacion,
         vol_extra: parseFloat(document.getElementById('volExtra').value) || 0,
@@ -605,8 +607,9 @@ document.getElementById('tirillaForm').onsubmit = async (e) => {
 
     try {
         // PRIORIDAD: Intentar guardar en tu API de Node.js (Render)
-        const response = await fetch('/api/actualizar-tirilla', { 
+        const response = await fetch(URL_APPS_SCRIPT, {
             method: 'POST',
+            mode: 'no-cors',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(datos)
         });
