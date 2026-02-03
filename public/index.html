@@ -559,88 +559,80 @@ async function cargarPedidosDashboard() {
     };
 // ... (aquí terminan tus funciones de irDashboard o logout)
 
-    // ==========================================
-    // LÓGICA PARA EL MODAL DE TIRILLAS (PUNTO 2)
+// ==========================================
+    // LÓGICA PARA EL MODAL DE TIRILLAS
     // ==========================================
     function abrirModalTirilla(id, nombre) {
-    console.log("Abriendo modal para:", id);
-    // Buscamos la estación considerando ambas posibilidades de nombre de propiedad
-    const est = estacionesData.find(e => (e.id === id || e.ID_Estacion === id));
-    
-    document.getElementById('modalEstacionId').value = id;
-    document.getElementById('modalEstacionNombre').innerText = nombre;
-    
-    if (est) {
-        // Usamos ?? para que si el valor es 0, se mantenga 0 y no se borre
-        document.getElementById('volExtra').value = est.vol_extra ?? est.VOL_EXTRA ?? '';
-        document.getElementById('volSupreme').value = est.vol_supreme ?? est.VOL_SUPREME ?? '';
-        document.getElementById('volDiesel').value = est.vol_diesel ?? est.VOL_DIESEL ?? '';
+        console.log("Abriendo modal para:", id);
+        const est = estacionesData.find(e => (e.id === id || e.ID_Estacion === id));
+        
+        document.getElementById('modalEstacionId').value = id;
+        document.getElementById('modalEstacionNombre').innerText = nombre;
+        
+        if (est) {
+            document.getElementById('volExtra').value = est.vol_extra ?? est.VOL_EXTRA ?? '';
+            document.getElementById('volSupreme').value = est.vol_supreme ?? est.VOL_SUPREME ?? '';
+            document.getElementById('volDiesel').value = est.vol_diesel ?? est.VOL_DIESEL ?? '';
+        }
+        
+        document.getElementById('modalTirilla').classList.remove('hidden');
     }
-    
-    document.getElementById('modalTirilla').classList.remove('hidden');
-}
 
-function cerrarModalTirilla() {
-    document.getElementById('modalTirilla').classList.add('hidden');
-    document.getElementById('tirillaForm').reset();
-}
+    function cerrarModalTirilla() {
+        document.getElementById('modalTirilla').classList.add('hidden');
+        document.getElementById('tirillaForm').reset();
+    }
 
-// ÚNICO CONTROLADOR PARA EL FORMULARIO DE TIRILLA
-document.getElementById('tirillaForm').onsubmit = async (e) => {
-    e.preventDefault();
-    const btn = e.target.querySelector('button[type="submit"]');
-    const idEstacion = document.getElementById('modalEstacionId').value;
+    // ÚNICO CONTROLADOR PARA EL FORMULARIO DE TIRILLA (CORREGIDO)
+    document.getElementById('tirillaForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const btn = e.target.querySelector('button[type="submit"]');
+        const idEstacion = document.getElementById('modalEstacionId').value;
+        const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbwiTjejEmBqcd0kHG4kbboYH4eWKwIVy95eTaj_qzPQILLaCTHbkx-uZBqLLMgHIMvw/exec';
 
-    const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbwiTjejEmBqcd0kHG4kbboYH4eWKwIVy95eTaj_qzPQILLaCTHbkx-uZBqLLMgHIMvw/exec';
-    
-    
-    const datos = {
-        id_estacion: idEstacion,
-        vol_extra: parseFloat(document.getElementById('volExtra').value) || 0,
-        vol_supreme: parseFloat(document.getElementById('volSupreme').value) || 0,
-        vol_diesel: parseFloat(document.getElementById('volDiesel').value) || 0,
-        fecha_hora: new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' })
-    };
+        const datos = {
+            id_estacion: idEstacion,
+            vol_extra: parseFloat(document.getElementById('volExtra').value) || 0,
+            vol_supreme: parseFloat(document.getElementById('volSupreme').value) || 0,
+            vol_diesel: parseFloat(document.getElementById('volDiesel').value) || 0,
+            fecha_hora: new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' })
+        };
 
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
 
-    try {
-        // PRIORIDAD: Intentar guardar en tu API de Node.js (Render)
-        const response = await fetch(URL_APPS_SCRIPT, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(datos)
-        });
+        try {
+            // Usamos mode: 'no-cors' para Google Apps Script
+            await fetch(URL_APPS_SCRIPT, {
+                method: 'POST',
+                mode: 'no-cors', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(datos)
+            });
 
-        const resData = await response.json();
-
-        if (response.ok && resData.success) {
-            alert('¡Inventario actualizado correctamente!');
+            // Con 'no-cors' no podemos leer la respuesta JSON, 
+            // pero si llega aquí es porque la petición se envió.
+            alert('¡Inventario enviado correctamente!');
             cerrarModalTirilla();
             
-            // Refrescamos datos para actualizar las tarjetas visuales
             if (typeof sincronizar === 'function') {
                 await sincronizar(); 
             } else {
                 location.reload();
             }
-        } else {
-            throw new Error(resData.message || "Error en el servidor");
+            
+        } catch (error) {
+            console.error("Error al guardar tirilla:", error);
+            alert('Error al conectar con el servidor de Google.');
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Guardar Tirilla";
         }
-        
-    } catch (error) {
-        console.error("Error al guardar tirilla:", error);
-        alert('No se pudo guardar: ' + error.message);
-    } finally {
-        btn.disabled = false;
-        btn.innerText = "Guardar Tirilla";
-    }
-};
+    };
 
-
-    // ... (aquí sigue tu función togglePanel)
+    // ==========================================
+    // NAVEGACIÓN Y VISTAS (NO TOCAR SI FUNCIONAN)
+    // ==========================================
     function togglePanel() {
         const p = document.getElementById('sidePanel');
         const o = document.getElementById('overlay');
@@ -653,287 +645,160 @@ document.getElementById('tirillaForm').onsubmit = async (e) => {
         localStorage.clear();
         window.location.href = '/login.html';
     }
-function irMisEstaciones() {
-    console.log("Cambiando a vista Estaciones...");
-    const dash = document.getElementById('dashboardView');
-    const estView = document.getElementById('estacionesView');
-    const pedView = document.getElementById('pedidosView');
-    
-    if(dash && estView && pedView) {
-        dash.classList.add('hidden');
-        pedView.classList.add('hidden'); // Oculta pedidos
-        estView.classList.remove('hidden'); // Muestra estaciones
+
+    function irMisEstaciones() {
+        const dash = document.getElementById('dashboardView');
+        const estView = document.getElementById('estacionesView');
+        const pedView = document.getElementById('pedidosView');
         
-        // LIMPIEZA CLAVE: Borra el contenido de la lista de pedidos para que no use espacio
-        document.getElementById('listaPedidosCompleta').innerHTML = '';
-        
-        dibujarEstaciones(); 
-    }
-    window.scrollTo(0, 0);
-}
-
-function irDashboard() {
-    document.getElementById('estacionesView').classList.add('hidden');
-    document.getElementById('dashboardView').classList.remove('hidden');
-    document.getElementById('pedidosView').classList.add('hidden');
-    
-    // Opcional: Volver el scroll al inicio de la página
-    window.scrollTo(0, 0);
-}
-
-function dibujarEstaciones() {
-    const container = document.getElementById('estacionesCardsContainer');
-    const userData = JSON.parse(localStorage.getItem('usuario'));
-    
-    if (!userData || !userData.estaciones) return;
-
-    // IDs del usuario: ["EST_001", "EST_002"]
-    const misEstacionesIds = userData.estaciones.split(',').map(s => s.trim());
-
-    // FILTRADO CLAVE: Usamos 'est.id' porque así viene del servidor de Render
-    const filtradas = estacionesData.filter(est => {
-        return misEstacionesIds.includes(est.id);
-    });
-
-    if (filtradas.length === 0) {
-        container.innerHTML = `
-            <div class="p-20 text-center">
-                <p class="text-slate-400 font-bold">No se encontraron datos para: ${misEstacionesIds.join(', ')}</p>
-                <p class="text-[10px] text-slate-300 mt-2">Dato en servidor usa propiedad 'id'</p>
-            </div>`;
-        return;
-    }
-
-    container.innerHTML = filtradas.map(est => {
-        
-        const cap = est.capacidad || { extra: 0, supreme: 0, diesel: 0 };
-        const vol = est.volumenActual || { extra: 0, supreme: 0, diesel: 0 };
-        const vta = est.ventaPromedio || { extra: 0, supreme: 0, diesel: 0 };
-        // En tu consola vemos que el nombre viene en 'est.nombre'
-        // NOTA: Como el servidor solo envía id/nombre/direccion, 
-        // los valores de inventario (vol_extra, etc) podrían no estar llegando aún.
-        
-        return `
-        <div class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100 mb-6">
-            <div class="flex justify-between items-start mb-6">
-                <div>
-                    <span class="text-[10px] font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full mb-2 inline-block">${est.id}</span>
-                    <h2 class="text-2xl font-black text-slate-800">${est.nombre || 'Estación'}</h2>
-                    <p class="text-[10px] text-slate-400">${est.direccion || ''}</p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            ${renderFuelCard('EXTRA', 'emerald', cap.extra || 0, vol.extra || 0, vta.extra || 0)}
-            ${renderFuelCard('SUPREME', 'red', cap.supreme || 0, vol.supreme || 0, vta.supreme || 0)}
-            ${Number(cap.diesel) > 0 
-                ? renderFuelCard('DIESEL', 'slate', cap.diesel || 0, vol.diesel || 0, vta.diesel || 0) 
-                : `<div class="bg-slate-50 rounded-3xl border border-dashed border-slate-200 flex items-center justify-center p-8 text-[8px] font-bold text-slate-300 uppercase">Sin Diesel</div>`}
-        </div>
-
-        <button onclick="abrirModalTirilla('${est.id}', '${est.nombre}')" 
-                class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-sm uppercase hover:bg-blue-600 transition-all shadow-xl">
-            Actualizar Inventario
-        </button>
-    </div>`;
-    }).join('');
-}
-
-function renderFuelCard(label, color, cap, vol, vta) {
-    // Convertimos a número para evitar que aparezca "NaN" o "0" si el texto está vacío
-    const capacidad = Number(cap || 0).toLocaleString();
-    const volumen = Number(vol || 0).toLocaleString();
-    const venta = Number(vta || 0).toLocaleString();
-
-    return `
-        <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100">
-            <p class="text-${color}-600 font-black text-center text-xs mb-4 uppercase tracking-widest border-b border-${color}-100 pb-2">${label}</p>
-            <div class="grid grid-cols-2 gap-2 mb-4 text-center">
-                <div>
-                    <p class="text-[8px] font-black text-slate-400 uppercase">Capacidad</p>
-                    <p class="text-xs font-bold text-slate-700">${capacidad} L</p>
-                </div>
-                <div>
-                    <p class="text-[8px] font-black text-slate-400 uppercase">Vta Prom.</p>
-                    <p class="text-xs font-bold text-slate-700">${venta} L</p>
-                </div>
-            </div>
-            <div class="bg-white p-4 rounded-xl text-center shadow-sm">
-                <p class="text-[8px] font-black text-slate-400 uppercase mb-1">Volumen Actual</p>
-                <p class="text-2xl font-black text-slate-900">${volumen} L</p>
-            </div>
-        </div>`;
-}
-// --- LÓGICA DEL FORMULARIO DE ACTUALIZACIÓN (TU CÓDIGO CON MEJORAS) ---
-document.getElementById('tirillaForm').onsubmit = async (e) => {
-    e.preventDefault();
-    const idEstacion = document.getElementById('modalEstacionId').value;
-    const btn = e.target.querySelector('button[type="submit"]');
-    
-    const datos = {
-        id_estacion: idEstacion, // Envía "EST_001"
-        vol_extra: document.getElementById('volExtra').value,
-        vol_supreme: document.getElementById('volSupreme').value,
-        vol_diesel: document.getElementById('volDiesel').value
-    };
-
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
-
-    try {
-        const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbwiTjejEmBqcd0kHG4kbboYH4eWKwIVy95eTaj_qzPQILLaCTHbkx-uZBqLLMgHIMvw/exec'; 
-
-        await fetch(URL_APPS_SCRIPT, {
-            method: 'POST',
-            mode: 'res.success', 
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(datos)
-        });
-
-        alert('¡Inventario actualizado!');
-        cerrarModalTirilla();
-        
-        // Refrescamos los datos
-        if (typeof sincronizar === 'function') {
-            await sincronizar(); 
-        } else {
-            location.reload();
+        if(dash && estView && pedView) {
+            dash.classList.add('hidden');
+            pedView.classList.add('hidden');
+            estView.classList.remove('hidden');
+            document.getElementById('listaPedidosCompleta').innerHTML = '';
+            dibujarEstaciones(); 
         }
-        
-    } catch (error) {
-        alert('Error al conectar con el servidor.');
-    } finally {
-        btn.disabled = false;
-        btn.innerText = "Guardar Tirilla";
-    }
-};
-
-function irOperadores() {
-    console.log("Navegando a Operadores...");
-    // Aquí ocultas las otras vistas y muestras la de Operadores
-    ocultarTodasLasVistas();
-    document.getElementById('vistaOperadores').classList.remove('hidden');
-}
-
-function irUnidades() {
-    console.log("Navegando a Unidades...");
-    ocultarTodasLasVistas();
-    document.getElementById('vistaUnidades').classList.remove('hidden');
-}
-
-// Función auxiliar para no repetir código
-function ocultarTodasLasVistas() {
-    const vistas = ['dashboardView', 'estacionesView', 'pedidosView', 'vistaOperadores', 'vistaUnidades'];
-    vistas.forEach(v => {
-        const el = document.getElementById(v);
-        if(el) el.classList.add('hidden');
-    });
-}
-
-function irMisPedidos() {
-    console.log("Cambiando a vista Mis Pedidos...");
-    const dash = document.getElementById('dashboardView');
-    const estView = document.getElementById('estacionesView');
-    const pedView = document.getElementById('pedidosView');
-    
-    // Ocultamos TODO lo demás primero
-    if(dash) dash.classList.add('hidden');
-    if(estView) estView.classList.add('hidden');
-    
-    // Mostramos la vista de pedidos
-    if(pedView) {
-        pedView.classList.remove('hidden');
-        // Importante: Renderizar solo una vez
-        renderizarPedidosLista('Todos');
+        window.scrollTo(0, 0);
     }
 
-    // Subir al inicio de la página
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
+    function irDashboard() {
+        document.getElementById('estacionesView').classList.add('hidden');
+        document.getElementById('dashboardView').classList.remove('hidden');
+        document.getElementById('pedidosView').classList.add('hidden');
+        window.scrollTo(0, 0);
+    }
 
-function filtrarPedidos(estatus) {
-    // Cambiar estilo de los botones de filtro
-    const botones = document.querySelectorAll('.filter-btn');
-    botones.forEach(btn => {
-        btn.classList.remove('bg-slate-900', 'text-white', 'active');
-        btn.classList.add('bg-white', 'text-slate-400', 'border-slate-100');
-    });
+    function dibujarEstaciones() {
+        const container = document.getElementById('estacionesCardsContainer');
+        const userData = JSON.parse(localStorage.getItem('usuario'));
+        if (!userData || !userData.estaciones) return;
 
-    // Resaltar el botón presionado (puedes ajustar esto según tu diseño)
-    const btnActivo = event.currentTarget;
-    btnActivo.classList.remove('bg-white', 'text-slate-400');
-    btnActivo.classList.add('bg-slate-900', 'text-white', 'active');
-    
-    renderizarPedidosLista(estatus);
-}
+        const misEstacionesIds = userData.estaciones.split(',').map(s => s.trim());
+        const filtradas = estacionesData.filter(est => misEstacionesIds.includes(est.id));
 
-async function renderizarPedidosLista(filtro = 'Todos') {
-    const container = document.getElementById('listaPedidosCompleta');
-    const userData = JSON.parse(localStorage.getItem('usuario'));
-    
-    // Mostrar un loader simple mientras carga
-    container.innerHTML = '<div class="p-10 text-center text-slate-400 animate-pulse font-bold uppercase text-xs tracking-widest">Filtrando pedidos...</div>';
-
-    try {
-        const response = await fetch(`/api/obtener-pedidos?estaciones=${encodeURIComponent(userData.estaciones)}&rol=${userData.rol}`);
-        const data = await response.json();
-        let pedidos = data.pedidos || [];
-
-        // Aplicar el filtro lógico
-        if (filtro !== 'Todos') {
-            pedidos = pedidos.filter(p => p.estatus.toLowerCase() === filtro.toLowerCase());
-        }
-
-        // Si después de filtrar no hay nada, mostrar aviso (para que no quede en blanco)
-        if (pedidos.length === 0) {
-            container.innerHTML = `
-                <div class="bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] p-12 text-center">
-                    <i class="fas fa-folder-open text-slate-300 text-4xl mb-4"></i>
-                    <p class="text-slate-500 font-bold">No se encontraron pedidos con estatus "${filtro}"</p>
-                </div>`;
+        if (filtradas.length === 0) {
+            container.innerHTML = `<div class="p-20 text-center"><p class="text-slate-400 font-bold">No hay datos disponibles.</p></div>`;
             return;
         }
 
-        // Dibujar los pedidos
-container.innerHTML = pedidos.map(p => {
-    // 1. Determinamos el color (Tu lógica que ya funciona)
-    const color = p.estatus === 'Pendiente' ? 'orange' : 
-                  p.estatus === 'En Ruta' ? 'purple' : 
-                  p.estatus === 'Entregado' ? 'emerald' : 
-                  p.estatus === 'Cancelado' ? 'red' : 'blue';
-
-    // 2. Determinamos el icono de forma segura
-    let icono = 'fa-box'; // Icono por defecto
-    if (p.estatus === 'Pendiente') icono = 'fa-clock';
-    if (p.estatus === 'En Ruta')   icono = 'fa-truck-fast';
-    if (p.estatus === 'Entregado') icono = 'fa-check-circle';
-    if (p.estatus === 'Cancelado') icono = 'fa-ban';
-
-    return `
-    <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-all mb-4">
-        <div class="flex flex-wrap justify-between items-center gap-4">
-            <div class="flex items-center gap-4">
-                <div class="h-12 w-12 bg-${color}-50 text-${color}-600 rounded-2xl flex items-center justify-center text-xl">
-                    <i class="far ${icono}"></i>
+        container.innerHTML = filtradas.map(est => {
+            const cap = est.capacidad || { extra: 0, supreme: 0, diesel: 0 };
+            const vol = {
+                extra: est.vol_extra || est.VOL_EXTRA || 0,
+                supreme: est.vol_supreme || est.VOL_SUPREME || 0,
+                diesel: est.vol_diesel || est.VOL_DIESEL || 0
+            };
+            const vta = est.ventaPromedio || { extra: 0, supreme: 0, diesel: 0 };
+            
+            return `
+            <div class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100 mb-6">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <span class="text-[10px] font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full mb-2 inline-block">${est.id}</span>
+                        <h2 class="text-2xl font-black text-slate-800">${est.nombre || 'Estación'}</h2>
+                        <p class="text-[10px] text-slate-400">${est.direccion || ''}</p>
+                    </div>
                 </div>
-                <div>
-                    <span class="text-[10px] font-black uppercase text-${color}-600 tracking-widest">${p.estatus}</span>
-                    <h3 class="font-black text-slate-900 text-lg uppercase">${p.estacion}</h3>
-                    <p class="text-xs text-slate-400 font-bold uppercase">${p.producto} — ${p.litros} L</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    ${renderFuelCard('EXTRA', 'emerald', cap.extra, vol.extra, vta.extra)}
+                    ${renderFuelCard('SUPREME', 'red', cap.supreme, vol.supreme, vta.supreme)}
+                    ${Number(cap.diesel) > 0 
+                        ? renderFuelCard('DIESEL', 'slate', cap.diesel, vol.diesel, vta.diesel) 
+                        : `<div class="bg-slate-50 rounded-3xl border border-dashed border-slate-200 flex items-center justify-center p-8 text-[8px] font-bold text-slate-300 uppercase">Sin Diesel</div>`}
                 </div>
-            </div>
-<button onclick="verDetallePedido('${p.id}')" class="bg-[#1e293b] text-white px-5 py-3 rounded-xl font-black text-[10px] uppercase hover:bg-slate-700 transition-all">
-    Detalles
-</button>
-        </div>
-    </div>`;
-}).join('');
-
-    } catch (e) {
-        console.error("Error:", e);
-        container.innerHTML = '<p class="text-red-500 text-center p-10 font-bold">Error al conectar con el servidor.</p>';
+                <button onclick="abrirModalTirilla('${est.id}', '${est.nombre}')" 
+                        class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-sm uppercase hover:bg-blue-600 transition-all shadow-xl">
+                    Actualizar Inventario
+                </button>
+            </div>`;
+        }).join('');
     }
-}
+
+    function renderFuelCard(label, color, cap, vol, vta) {
+        const capacidad = Number(cap || 0).toLocaleString();
+        const volumen = Number(vol || 0).toLocaleString();
+        const venta = Number(vta || 0).toLocaleString();
+        return `
+            <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100">
+                <p class="text-${color}-600 font-black text-center text-xs mb-4 uppercase tracking-widest border-b border-${color}-100 pb-2">${label}</p>
+                <div class="grid grid-cols-2 gap-2 mb-4 text-center">
+                    <div><p class="text-[8px] font-black text-slate-400 uppercase">Capacidad</p><p class="text-xs font-bold text-slate-700">${capacidad} L</p></div>
+                    <div><p class="text-[8px] font-black text-slate-400 uppercase">Vta Prom.</p><p class="text-xs font-bold text-slate-700">${venta} L</p></div>
+                </div>
+                <div class="bg-white p-4 rounded-xl text-center shadow-sm">
+                    <p class="text-[8px] font-black text-slate-400 uppercase mb-1">Volumen Actual</p>
+                    <p class="text-2xl font-black text-slate-900">${volumen} L</p>
+                </div>
+            </div>`;
+    }
+
+    // --- OPERADORES Y UNIDADES ---
+    function irOperadores() {
+        ocultarTodasLasVistas();
+        const v = document.getElementById('vistaOperadores');
+        if(v) v.classList.remove('hidden');
+    }
+
+    function irUnidades() {
+        ocultarTodasLasVistas();
+        const v = document.getElementById('vistaUnidades');
+        if(v) v.classList.remove('hidden');
+    }
+
+    function ocultarTodasLasVistas() {
+        ['dashboardView', 'estacionesView', 'pedidosView', 'vistaOperadores', 'vistaUnidades'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.classList.add('hidden');
+        });
+    }
+
+    function irMisPedidos() {
+        ocultarTodasLasVistas();
+        const pedView = document.getElementById('pedidosView');
+        if(pedView) {
+            pedView.classList.remove('hidden');
+            renderizarPedidosLista('Todos');
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function renderizarPedidosLista(filtro = 'Todos') {
+        const container = document.getElementById('listaPedidosCompleta');
+        const userData = JSON.parse(localStorage.getItem('usuario'));
+        container.innerHTML = '<div class="p-10 text-center text-slate-400 animate-pulse font-bold text-xs uppercase">Filtrando pedidos...</div>';
+        try {
+            const response = await fetch(`/api/obtener-pedidos?estaciones=${encodeURIComponent(userData.estaciones)}&rol=${userData.rol}`);
+            const data = await response.json();
+            let pedidos = data.pedidos || [];
+            if (filtro !== 'Todos') pedidos = pedidos.filter(p => p.estatus.toLowerCase() === filtro.toLowerCase());
+            
+            if (pedidos.length === 0) {
+                container.innerHTML = `<div class="p-12 text-center text-slate-500 font-bold">No hay pedidos "${filtro}"</div>`;
+                return;
+            }
+
+            container.innerHTML = pedidos.map(p => {
+                const colors = { 'Pendiente': 'orange', 'En Ruta': 'purple', 'Entregado': 'emerald', 'Cancelado': 'red' };
+                const color = colors[p.estatus] || 'blue';
+                return `
+                <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm mb-4">
+                    <div class="flex justify-between items-center gap-4">
+                        <div class="flex items-center gap-4">
+                            <div class="h-12 w-12 bg-${color}-50 text-${color}-600 rounded-2xl flex items-center justify-center"><i class="far fa-box"></i></div>
+                            <div>
+                                <span class="text-[10px] font-black uppercase text-${color}-600">${p.estatus}</span>
+                                <h3 class="font-black text-slate-900 text-lg uppercase">${p.estacion}</h3>
+                                <p class="text-xs text-slate-400 font-bold">${p.producto} — ${p.litros} L</p>
+                            </div>
+                        </div>
+                        <button onclick="verDetallePedido('${p.id}')" class="bg-[#1e293b] text-white px-5 py-3 rounded-xl font-black text-[10px] uppercase">Detalles</button>
+                    </div>
+                </div>`;
+            }).join('');
+        } catch (e) {
+            container.innerHTML = '<p class="text-red-500 text-center p-10 font-bold">Error de conexión.</p>';
+        }
+    }
 
 async function verDetallePedido(id) {
     const userData = JSON.parse(localStorage.getItem('usuario'));
