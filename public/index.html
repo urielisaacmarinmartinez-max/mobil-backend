@@ -814,32 +814,29 @@ async function verDetallePedido(id) {
         const response = await fetch(`/api/obtener-pedido-detallado?id=${id}`);
         const p = await response.json();
 
-        // 1. LÓGICA DE VISIBILIDAD DE ESTATUS
-        let estatusParaMostrar = p.estatus;
+        // 1. DETERMINAR VISIBILIDAD POR ROL
         let esGerente = userData.rol === 'Gerente Estación';
         let estaConfirmado = p.confirmacion_reubicacion && p.confirmacion_reubicacion.trim() !== "";
+        let estatusParaMostrar = (esGerente && !estaConfirmado) ? "Pendiente" : p.estatus;
 
-        if (esGerente && !estaConfirmado) {
-            estatusParaMostrar = "Pendiente";
-        }
-
-        // 2. RELLENAR DATOS BÁSICOS
+        // 2. RELLENAR CABECERA
         document.getElementById('det_estacion').textContent = p.estacion;
         document.getElementById('det_status').textContent = estatusParaMostrar;
-        
-        if(document.getElementById('det_producto')) {
-            document.getElementById('det_producto').textContent = p.producto || '---';
-        }
-        if(document.getElementById('det_litros')) {
-            document.getElementById('det_litros').textContent = `${p.litros || '0'} L`;
-        }
 
-        // MODIFICACIÓN: Prioridad y Fecha (Nuevos campos solicitados)
+        // 3. RELLENAR INFORMACIÓN PRINCIPAL (Bloque Superior Izquierdo)
+        // Usamos los IDs originales para evitar duplicidad visual
+        document.getElementById('det_producto').textContent = p.producto || '---';
+        document.getElementById('det_litros').textContent = `${p.litros || '0'} L`;
+
+        // PRIORIDAD: Ocupa el lugar de la Orden de Carga
         if(document.getElementById('det_prioridad')) {
             document.getElementById('det_prioridad').textContent = p.prioridad || 'Normal';
+            // Cambiamos color del texto si es Urgente
+            document.getElementById('det_prioridad').className = p.prioridad === 'Urgente' ? "font-bold text-red-600" : "font-bold text-slate-700";
         }
+
+        // 4. FECHA DE SOLICITUD (Bloque Superior Derecho)
         if(document.getElementById('det_fecha_solicitud')) {
-            // Dividimos la fecha y hora si vienen del sistema "04/02/2026, 14:00:00"
             const parts = (p.fecha_registro || '---').split(',');
             document.getElementById('det_fecha_solicitud').textContent = parts[0];
             if(document.getElementById('det_hora_solicitud')) {
@@ -847,41 +844,34 @@ async function verDetallePedido(id) {
             }
         }
 
-        // 3. RELLENAR NUEVA SECCIÓN DE ASIGNACIÓN
-        // MODIFICACIÓN: Solo toma 'CANTIDAD EXACTA'. Si está vacío, muestra '---'
-        const valorExacto = p['CANTIDAD EXACTA'] || p.cantidad_exacta;
-        const cantMostrar = (valorExacto && valorExacto !== "") ? `${valorExacto} L` : '---';
+        // 5. DETALLE DE ASIGNACIÓN (Bloque Azul Inferior)
+        // Cantidad Exacta: Estricta, si no hay dato en R, pone ---
+        const valorExacto = p['CANTIDAD EXACTA'];
+        document.getElementById('det_cantidad_exacta_new').textContent = (valorExacto && valorExacto !== "") ? `${valorExacto} L` : '---';
         
         document.getElementById('det_fletera_new').textContent = p.fletera || 'PENDIENTE';
         document.getElementById('det_unidad_new').textContent = p.unidad ? `${p.unidad} ${p.placa1 || ''}` : 'SIN ASIGNAR';
-        
-        document.getElementById('det_cantidad_exacta_new').textContent = cantMostrar;
         document.getElementById('det_eta_new').textContent = p.eta || '--:--';
 
-        // 4. LÓGICA DE ORDEN DE CARGA (Eliminado/Oculto para Gerente)
-        const areaLogistica = document.getElementById('area_logistica_exclusiva');
-        if (esGerente) {
-            if(areaLogistica) areaLogistica.classList.add('hidden');
-        } else {
-            if(areaLogistica) areaLogistica.classList.remove('hidden');
-            document.getElementById('det_orden').textContent = p.orden || 'PENDIENTE';
-        }
+        // 6. CONTROL DE VISIBILIDAD (ELIMINAR REPETIDOS Y OCULTAR LOGÍSTICA)
         
-        // 5. VISIBILIDAD DE LA NUEVA ÁREA DE ASIGNACIÓN
+        // Ocultar Orden de Carga siempre para Gerente
+        const areaLogistica = document.getElementById('area_logistica_exclusiva');
+        if (areaLogistica) areaLogistica.classList.add('hidden');
+
+        // Ocultar el antiguo cuadro de "Seguimiento de Unidad" (Se repite abajo)
+        const seguimientoViejo = document.getElementById('seguimiento_unidad_box'); // Asegúrate que este ID exista en tu HTML
+        if (seguimientoViejo) seguimientoViejo.classList.add('hidden');
+
+        // Mostrar Detalle de Asignación solo si está confirmado o no es gerente
         const areaAsignacionNueva = document.getElementById('det_area_asignacion_nueva');
         if (esGerente && !estaConfirmado) {
-            if(areaAsignacionNueva) areaAsignacionNueva.classList.add('hidden');
+            areaAsignacionNueva.classList.add('hidden');
         } else {
-            if(areaAsignacionNueva) areaAsignacionNueva.classList.remove('hidden');
+            areaAsignacionNueva.classList.remove('hidden');
         }
 
-        // 6. LÓGICA VISUAL DE CANCELACIÓN
-        if (p.estatus === 'Cancelado') {
-            const elStatus = document.getElementById('det_status');
-            elStatus.classList.add('bg-red-100', 'text-red-600');
-        }
-
-        // 7. BOTÓN PARA CANCELAR (Usando tu función procesarCancelacion)
+        // 7. BOTÓN CANCELAR
         const areaBotonCancelacion = document.getElementById('area_cancelacion');
         if (p.estatus === 'Pendiente') {
             areaBotonCancelacion.classList.remove('hidden');
@@ -892,7 +882,6 @@ async function verDetallePedido(id) {
 
     } catch (e) {
         console.error("Error al cargar detalles:", e);
-        document.getElementById('det_estacion').textContent = "Error al cargar";
     }
 }
 
@@ -974,20 +963,19 @@ window.onload = initDashboard;
             <div class="space-y-4">
                 <h4 class="text-[11px] font-black text-slate-300 uppercase tracking-widest">Información del Pedido</h4>
                 <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <p class="text-[9px] font-bold text-slate-400 uppercase">Producto</p>
-                        <p id="det_producto" class="font-bold text-slate-700">--</p>
-                    </div>
-                    <div>
-                        <p class="text-[9px] font-bold text-slate-400 uppercase">Litros Solicitados</p>
-                        <p id="det_litros" class="font-bold text-slate-700">-- L</p>
-                    </div>
-                </div>
-                <div id="area_logistica_exclusiva" class="hidden"> 
-                    <p class="text-[9px] font-bold text-slate-400 uppercase">Orden de Carga</p>
-                    <p id="det_orden" class="font-black text-blue-600 text-lg">#----</p>
-                </div>
-            </div>
+    <div>
+        <p class="text-[10px] uppercase font-black text-slate-400">Producto</p>
+        <p id="det_producto" class="font-bold text-slate-800">---</p>
+    </div>
+    <div>
+        <p class="text-[10px] uppercase font-black text-slate-400">Litros Solicitados</p>
+        <p id="det_litros" class="font-bold text-slate-800">--- L</p>
+    </div>
+    <div>
+        <p class="text-[10px] uppercase font-black text-slate-400">Prioridad de Entrega</p>
+        <p id="det_prioridad" class="font-bold">---</p>
+    </div>
+</div>
 
             <div class="space-y-4 bg-slate-50 p-6 rounded-3xl">
                 <h4 class="text-[11px] font-black text-slate-300 uppercase tracking-widest">Seguimiento de Unidad</h4>
