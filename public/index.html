@@ -827,8 +827,11 @@ async function verDetallePedido(id) {
         document.getElementById('det_estacion').textContent = p.estacion;
         document.getElementById('det_status').textContent = estatusParaMostrar;
         
-        if(document.getElementById('det_folio')) {
-            document.getElementById('det_folio').textContent = p.folio || 'S/F';
+        if(document.getElementById('det_producto')) {
+            document.getElementById('det_producto').textContent = p.producto || '---';
+        }
+        if(document.getElementById('det_litros')) {
+            document.getElementById('det_litros').textContent = `${p.litros || '0'} L`;
         }
 
         // 3. RELLENAR NUEVA SECCIÓN DE ASIGNACIÓN (La estética que pediste)
