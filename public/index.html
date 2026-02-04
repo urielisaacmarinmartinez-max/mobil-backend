@@ -847,11 +847,13 @@ async function verDetallePedido(id) {
 
         // 5. DETALLE DE ASIGNACIÓN (Bloque Azul Inferior)
         // Cantidad Exacta: Estricta, si no hay dato en R, pone ---
-        const valorExacto = p['CANTIDAD EXACTA'] || p.cantidad_exacta;
+        const valorExacto = p['CANTIDAD EXACTA'] || p['CANTIDAD_EXACTA'] || p.cantidad_exacta || p.litros_reales;
         const elementoCantExacta = document.getElementById('det_cantidad_exacta_new');
         
-        if (valorExacto && String(valorExacto).trim() !== "") {
+        // Verificamos si el dato existe y no es solo el número 0 por error
+        if (valorExacto !== undefined && valorExacto !== null && String(valorExacto).trim() !== "") {
             elementoCantExacta.textContent = `${valorExacto} L`;
+            elementoCantExacta.className = "text-sm font-black text-slate-800"; // Aseguramos que sea visible
         } else {
             elementoCantExacta.textContent = '---';
         }
