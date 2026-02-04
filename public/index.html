@@ -994,12 +994,51 @@ window.onload = initDashboard;
             </div>
         </div>
 
-        <div class="p-8 bg-slate-50 flex gap-3">
-            <button id="btn_cancelar_pedido" class="flex-1 py-4 bg-red-50 text-red-500 rounded-2xl font-black text-xs uppercase hover:bg-red-500 hover:text-white transition-all">
-                Cancelar Pedido
-            </button>
+        <div class="p-6">
+    <h2 id="det_estacion" class="text-2xl font-black text-slate-900"></h2>
+    <div id="det_status" class="inline-block px-3 py-1 rounded-full text-xs font-bold mb-4"></div>
+    
+    <div id="area_logistica_exclusiva" class="hidden mb-4">
+        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Orden de Carga</p>
+        <p id="det_orden" class="font-bold text-slate-800 text-lg">---</p>
+    </div>
+
+    <div id="det_area_asignacion_nueva" class="mt-4">
+        <h4 class="text-[11px] font-black text-slate-800 mb-3 uppercase tracking-tighter">Detalle de Asignación</h4>
+        <div class="space-y-3">
+            <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 grid grid-cols-2 gap-4">
+                <div>
+                    <p class="text-[9px] uppercase font-black text-blue-600 mb-1">Fletera</p>
+                    <p id="det_fletera_new" class="text-xs font-bold text-slate-700 italic">---</p>
+                </div>
+                <div>
+                    <p class="text-[9px] uppercase font-black text-blue-600 mb-1">Unidad</p>
+                    <p id="det_unidad_new" class="text-xs font-bold text-slate-700">---</p>
+                </div>
+            </div>
+            <div class="bg-blue-50/40 rounded-2xl p-4 border border-blue-100 grid grid-cols-3 gap-2">
+                <div>
+                    <p class="text-[9px] uppercase font-black text-blue-600 mb-1">Producto</p>
+                    <p id="det_producto_new" class="text-[10px] font-black bg-blue-600 text-white px-2 py-0.5 rounded-md inline-block">---</p>
+                </div>
+                <div>
+                    <p class="text-[9px] uppercase font-black text-blue-600 mb-1">Cant. Exacta</p>
+                    <p id="det_cantidad_new" class="text-xs font-bold text-slate-700">---</p>
+                </div>
+                <div>
+                    <p class="text-[9px] uppercase font-black text-blue-600 mb-1">ETA</p>
+                    <p id="det_eta_new" class="text-xs font-bold text-blue-700">---</p>
+                </div>
+            </div>
         </div>
     </div>
+
+    <div id="area_cancelacion" class="mt-6 pt-4 border-t border-slate-100 hidden">
+        <button class="w-full bg-red-50 text-red-600 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest border border-red-100 hover:bg-red-600 hover:text-white transition-all">
+            <i class="fas fa-ban mr-2"></i> Cancelar Pedido
+        </button>
+    </div>
+</div>
 </div>
 
 <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-6 py-3 flex justify-between items-center z-[100] shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
