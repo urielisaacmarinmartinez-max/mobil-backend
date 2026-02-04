@@ -823,64 +823,58 @@ async function verDetallePedido(id) {
         document.getElementById('det_estacion').textContent = p.estacion;
         document.getElementById('det_status').textContent = estatusParaMostrar;
 
-        // 3. RELLENAR INFORMACIÓN PRINCIPAL (Bloque Superior Izquierdo)
-        // Usamos los IDs originales para evitar duplicidad visual
+        // 3. RELLENAR INFORMACIÓN PRINCIPAL
         document.getElementById('det_producto').textContent = p.producto || '---';
         document.getElementById('det_litros').textContent = `${p.litros || '0'} L`;
 
-        // PRIORIDAD: Ocupa el lugar de la Orden de Carga
         if(document.getElementById('det_prioridad')) {
             document.getElementById('det_prioridad').textContent = p.prioridad || 'Normal';
-            // Cambiamos color del texto si es Urgente
-            document.getElementById('det_prioridad').className = p.prioridad === 'Urgente' ? "font-bold text-red-600" : "font-bold text-slate-700";
+            document.getElementById('det_prioridad').className = p.prioridad === 'Urgente' ? "font-bold text-red-600 uppercase" : "font-bold text-slate-700 uppercase";
         }
 
-        // 4. FECHA DE SOLICITUD (Bloque Superior Derecho)
-        const fechaRaw = p['FECHA DE REGISTRO'] || p.fecha_registro || p.fecha || '---';
-        if(document.getElementById('det_fecha_solicitud')) {
-            const parts = fechaRaw.split(',');
-            document.getElementById('det_fecha_solicitud').textContent = parts[0];
-            if(document.getElementById('det_hora_solicitud')) {
-                document.getElementById('det_hora_solicitud').textContent = parts[1] || '';
+        // 4. FECHA DE SOLICITUD (Columna B)
+        // Buscamos todas las variantes posibles de nombre de columna
+        const fechaRaw = p['FECHA DE REGISTRO'] || p.fecha_de_registro || p.fechaderegistro || p.fecha_registro || p.fecha || '---';
+        const elFecha = document.getElementById('det_fecha_solicitud');
+        const elHora = document.getElementById('det_hora_solicitud');
+
+        if(elFecha) {
+            if (fechaRaw.includes(',')) {
+                const parts = fechaRaw.split(',');
+                elFecha.textContent = parts[0].trim();
+                if(elHora) elHora.textContent = parts[1].trim();
+            } else {
+                elFecha.textContent = fechaRaw;
+                if(elHora) elHora.textContent = '';
             }
         }
 
         // 5. DETALLE DE ASIGNACIÓN (Bloque Azul Inferior)
-        // Cantidad Exacta: Estricta, si no hay dato en R, pone ---
-        const valorExacto = p['CANTIDAD EXACTA'] || p['CANTIDAD_EXACTA'] || p.cantidad_exacta || p.litros_reales;
+        // Cantidad Exacta (Columna R): Buscamos variantes
+        const valorExacto = p['CANTIDAD EXACTA'] || p.cantidad_exacta || p.cantidadexacta || p['CANTIDAD_EXACTA'];
         const elementoCantExacta = document.getElementById('det_cantidad_exacta_new');
         
-        // Verificamos si el dato existe y no es solo el número 0 por error
-        if (valorExacto !== undefined && valorExacto !== null && String(valorExacto).trim() !== "") {
-            elementoCantExacta.textContent = `${valorExacto} L`;
-            elementoCantExacta.className = "text-sm font-black text-slate-800"; // Aseguramos que sea visible
-        } else {
-            elementoCantExacta.textContent = '---';
+        if (elementoCantExacta) {
+            if (valorExacto && String(valorExacto).trim() !== "" && valorExacto !== 0) {
+                elementoCantExacta.textContent = `${valorExacto} L`;
+                elementoCantExacta.className = "text-sm font-black text-slate-800";
+            } else {
+                elementoCantExacta.textContent = '---';
+                elementoCantExacta.className = "text-sm font-bold text-slate-400";
+            }
         }
-
-
-        document.getElementById('det_cantidad_exacta_new').textContent = p.cantidad_exacta || '--:--';
         
+        // Datos que ya funcionan (ETA, Fletera, Unidad)
         document.getElementById('det_fletera_new').textContent = p.fletera || 'PENDIENTE';
         document.getElementById('det_unidad_new').textContent = p.unidad ? `${p.unidad} ${p.placa1 || ''}` : 'SIN ASIGNAR';
         document.getElementById('det_eta_new').textContent = p.eta || '--:--';
 
-        // 6. CONTROL DE VISIBILIDAD (ELIMINAR REPETIDOS Y OCULTAR LOGÍSTICA)
-        
-        // Ocultar Orden de Carga siempre para Gerente
-        const areaLogistica = document.getElementById('area_logistica_exclusiva');
-        if (areaLogistica) areaLogistica.classList.add('hidden');
-
-        // Ocultar el antiguo cuadro de "Seguimiento de Unidad" (Se repite abajo)
-        const seguimientoViejo = document.getElementById('seguimiento_unidad_box'); // Asegúrate que este ID exista en tu HTML
-        if (seguimientoViejo) seguimientoViejo.classList.add('hidden');
-
-        // Mostrar Detalle de Asignación solo si está confirmado o no es gerente
+        // 6. CONTROL DE VISIBILIDAD
         const areaAsignacionNueva = document.getElementById('det_area_asignacion_nueva');
         if (esGerente && !estaConfirmado) {
-            areaAsignacionNueva.classList.add('hidden');
+            if (areaAsignacionNueva) areaAsignacionNueva.classList.add('hidden');
         } else {
-            areaAsignacionNueva.classList.remove('hidden');
+            if (areaAsignacionNueva) areaAsignacionNueva.classList.remove('hidden');
         }
 
         // 7. BOTÓN CANCELAR
