@@ -836,8 +836,9 @@ async function verDetallePedido(id) {
         }
 
         // 4. FECHA DE SOLICITUD (Bloque Superior Derecho)
+        const fechaRaw = p['FECHA DE REGISTRO'] || p.fecha_registro || p.fecha || '---';
         if(document.getElementById('det_fecha_solicitud')) {
-            const parts = (p.fecha_registro || '---').split(',');
+            const parts = fechaRaw.split(',');
             document.getElementById('det_fecha_solicitud').textContent = parts[0];
             if(document.getElementById('det_hora_solicitud')) {
                 document.getElementById('det_hora_solicitud').textContent = parts[1] || '';
@@ -846,7 +847,16 @@ async function verDetallePedido(id) {
 
         // 5. DETALLE DE ASIGNACIÓN (Bloque Azul Inferior)
         // Cantidad Exacta: Estricta, si no hay dato en R, pone ---
-        const valorExacto = p['CANTIDAD EXACTA'];
+        const valorExacto = p['CANTIDAD EXACTA'] || p.cantidad_exacta;
+        const elementoCantExacta = document.getElementById('det_cantidad_exacta_new');
+        
+        if (valorExacto && String(valorExacto).trim() !== "") {
+            elementoCantExacta.textContent = `${valorExacto} L`;
+        } else {
+            elementoCantExacta.textContent = '---';
+        }
+
+
         document.getElementById('det_cantidad_exacta_new').textContent = (valorExacto && valorExacto !== "") ? `${valorExacto} L` : '---';
         
         document.getElementById('det_fletera_new').textContent = p.fletera || 'PENDIENTE';
