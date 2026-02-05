@@ -141,7 +141,22 @@ body[data-user-role="Logistica_Policon"] .pedido-checkbox {
         </header>
         <div id="estacionesCardsContainer" class="grid grid-cols-1 gap-8">
             </div>
-    <div id="pedidosView" class="hidden p-8 lg:p-12">
+
+   <div id="estacionesView" class="hidden">
+        <header class="flex justify-between items-start mb-10">
+            <div>
+                <h1 class="text-4xl font-black tracking-tight text-slate-900">Mis Estaciones</h1>
+                <p class="text-slate-500 font-medium mt-1">Control de inventarios (Tirillas)</p>
+            </div>
+            <button onclick="irDashboard()" class="bg-slate-800 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg hover:bg-slate-700 transition-all">
+                <i class="fas fa-arrow-left mr-2"></i> Volver al Dashboard
+            </button>
+        </header>
+        <div id="estacionesCardsContainer" class="grid grid-cols-1 gap-8">
+            </div>
+    </div>
+
+    <div id="pedidosView" class="hidden">
         <header class="flex justify-between items-start mb-10">
             <div>
                 <h1 class="text-4xl font-black tracking-tight text-slate-900">Mis Pedidos</h1>
@@ -171,7 +186,6 @@ body[data-user-role="Logistica_Policon"] .pedido-checkbox {
                         <p class="text-white font-bold text-sm"><span id="contador-seleccion">0</span> Pedidos</p>
                     </div>
                 </div>
-
                 <div class="flex items-center gap-3 bg-slate-800 p-2 rounded-2xl border border-white/5">
                     <label class="text-[9px] text-slate-400 font-black uppercase px-2">Día de Entrega:</label>
                     <input type="date" id="fecha-bloque" class="bg-transparent text-white border-none focus:ring-0 font-bold text-sm outline-none cursor-pointer">
@@ -185,31 +199,29 @@ body[data-user-role="Logistica_Policon"] .pedido-checkbox {
         <div id="listaPedidosCompleta" class="flex flex-col gap-2">
             <p class="text-slate-400 italic">Cargando pedidos...</p>
         </div>
-    </div> <div id="modalTirilla" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
+    </div>
+
+    <div id="modalTirilla" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl relative">
             <button onclick="cerrarModalTirilla()" class="absolute top-6 right-6 text-slate-300 hover:text-slate-900"><i class="fas fa-times text-xl"></i></button>
             <h2 id="modalEstacionNombre" class="text-2xl font-black text-slate-900 mb-1">---</h2>
             <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8 text-blue-600">Captura de Volumen Actual</p>
-            
             <form id="tirillaForm" class="space-y-6">
                 <input type="hidden" id="modalEstacionId">
                 <div class="space-y-2">
-                    <label class="text-[10px] font-black text-emerald-600 ml-2 uppercase">Extra (Litros)</label>
+                    <label class="text-[10px] font-black text-emerald-600 ml-2 uppercase">Extra (Lts)</label>
                     <input type="number" id="volExtra" required class="w-full p-5 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-emerald-500 font-bold text-lg" placeholder="0.00">
                 </div>
                 <div class="space-y-2">
-                    <label class="text-[10px] font-black text-red-600 ml-2 uppercase">Supreme (Litros)</label>
+                    <label class="text-[10px] font-black text-red-600 ml-2 uppercase">Supreme (Lts)</label>
                     <input type="number" id="volSupreme" required class="w-full p-5 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-red-500 font-bold text-lg" placeholder="0.00">
                 </div>
                 <div id="dieselInputGroup" class="space-y-2">
-                    <label class="text-[10px] font-black text-slate-800 ml-2 uppercase">Diesel (Litros)</label>
+                    <label class="text-[10px] font-black text-slate-800 ml-2 uppercase">Diesel (Lts)</label>
                     <input type="number" id="volDiesel" class="w-full p-5 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-slate-800 font-bold text-lg" placeholder="0.00">
                 </div>
-                
                 <div class="pt-4">
-                    <button type="submit" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg shadow-xl hover:bg-blue-600 transition-all">
-                        Guardar Tirilla
-                    </button>
+                    <button type="submit" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg shadow-xl hover:bg-blue-600 transition-all">Guardar Tirilla</button>
                 </div>
             </form>
         </div>
@@ -221,60 +233,11 @@ body[data-user-role="Logistica_Policon"] .pedido-checkbox {
             <h2 class="text-3xl font-black text-slate-900">Nuevo Pedido</h2>
             <button onclick="togglePanel()" class="text-slate-300 hover:text-slate-900 transition-colors"><i class="fas fa-times text-2xl"></i></button>
         </div>
-
         <form id="orderForm" class="space-y-6">
-            <div class="space-y-2">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Estación de Suministro</label>
-                <select id="selEstacion" onchange="loadConfig()" required class="w-full p-5 bg-slate-50 rounded-2xl font-bold border-none outline-none focus:ring-2 focus:ring-red-500">
-                    <option value="">Cargando estaciones...</option>
-                </select>
-            </div>
-
-            <div class="space-y-2">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Dirección de Entrega</label>
-                <input id="dirAuto" type="text" readonly class="w-full p-5 bg-slate-100 rounded-2xl text-slate-500 font-medium border-none outline-none">
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tipo</label>
-                    <select id="fuelType" onchange="calcTotal()" class="w-full p-5 bg-slate-50 rounded-2xl font-bold border-none">
-                        <option value="Extra">Extra</option>
-                        <option value="Supreme">Supreme</option>
-                        <option value="Diesel">Diesel</option>
-                    </select>
-                </div>
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cantidad (L)</label>
-                    <input id="fuelQty" type="number" oninput="calcTotal()" placeholder="Ej. 20000" required class="w-full p-5 bg-slate-50 rounded-2xl font-black border-none">
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fecha Entrega</label>
-                    <input id="deliveryDate" type="date" required class="w-full p-5 bg-slate-50 rounded-2xl font-bold border-none">
-                </div>
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Prioridad</label>
-                    <select id="orderPriority" class="w-full p-5 bg-slate-50 rounded-2xl font-bold border-none">
-                        <option value="Normal">Normal</option>
-                        <option value="Urgente">Urgente</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="p-6 bg-slate-900 rounded-[2.5rem] text-white space-y-4">
-                <div class="flex justify-between items-center">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Estimado</p>
-                    <p id="finalTotal" class="text-3xl font-black text-emerald-400">$0.00</p>
-                </div>
-                <button type="submit" id="btnConfirm" class="w-full bg-red-600 text-white p-5 rounded-2xl font-black text-lg shadow-xl hover:bg-red-700 active:scale-95 transition-all">
-                    Confirmar Orden
-                </button>
-            </div>
-        </form>
+            </form>
     </div>
+</main>
+
 
     <script>
     let estacionesData = [];
