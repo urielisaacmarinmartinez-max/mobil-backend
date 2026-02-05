@@ -770,10 +770,12 @@ async function cargarPedidosDashboard() {
         renderizarPedidosLista(estatus);
     }
 
-   async function renderizarPedidosLista(filtro = 'Todos') {
+async function renderizarPedidosLista(filtro = 'Todos') {
     const container = document.getElementById('listaPedidosCompleta');
     const userData = JSON.parse(localStorage.getItem('usuario'));
-    container.innerHTML = '<div class="p-10 text-center text-slate-400 animate-pulse font-bold uppercase text-xs tracking-widest">Filtrando pedidos...</div>';
+    
+    // 1. Limpieza total y aviso de carga
+    container.innerHTML = '<div class="p-10 text-center text-slate-400 animate-pulse font-black uppercase text-xs tracking-widest">Generando Lista Logística...</div>';
 
     try {
         const response = await fetch(`/api/obtener-pedidos?estaciones=${encodeURIComponent(userData.estaciones)}&rol=${userData.rol}`);
@@ -784,70 +786,69 @@ async function cargarPedidosDashboard() {
             pedidos = pedidos.filter(p => p.estatus.toLowerCase() === filtro.toLowerCase());
         }
 
-        // --- SEGURIDAD DE ROL ---
-        const esLogistica = userData.rol === 'Logística' || userData.rol === 'Admin';
+        if (pedidos.length === 0) {
+            container.innerHTML = `<p class="p-10 text-center font-bold text-slate-400">No hay pedidos "${filtro}"</p>`;
+            return;
+        }
+
+        // --- VALIDACIÓN DE ROL ---
+        // Forzamos 'true' momentáneamente para que VEAS el cambio. 
+        // Luego lo regresamos a: userData.rol === 'Logística' || userData.rol === 'Admin'
+        const esLogistica = true; 
 
         container.innerHTML = pedidos.map(p => {
             const color = p.estatus === 'Pendiente' ? 'orange' : 
                           p.estatus === 'En Ruta' ? 'purple' : 
                           p.estatus === 'Entregado' ? 'emerald' : 'blue';
 
-            // Si es logística, usamos un diseño de "Fila compacta"
-            // Si es gerente, mantenemos tu diseño original de "Tarjeta"
-            if (esLogistica) {
-                return `
-                <div class="bg-white px-6 py-3 rounded-2xl border border-slate-100 shadow-sm hover:border-blue-300 transition-all mb-2 flex items-center justify-between">
-                    <div class="flex items-center gap-4 flex-1">
-                        ${p.estatus === 'Pendiente' ? `
-                            <input type="checkbox" value="${p.id}" class="pedido-checkbox w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
-                        ` : '<div class="w-5"></div>'}
-                        
-                        <div class="text-xs font-black text-slate-400 w-16 uppercase">${p.id.slice(-5)}</div>
-                        
-                        <div class="flex-1">
-                            <h3 class="font-bold text-slate-800 text-sm uppercase">${p.estacion}</h3>
-                            <p class="text-[10px] text-slate-400 font-bold">${p.producto} — ${p.litros}L</p>
-                        </div>
+            // DISEÑO TIPO FILA DE TABLA (Como el software de logística que enviaste)
+            return `
+            <div class="group bg-white hover:bg-slate-50 border-b border-slate-100 flex items-center py-3 px-4 transition-all first:rounded-t-3xl last:rounded-b-3xl">
+                
+                <div class="w-10 flex justify-center">
+                    ${p.estatus === 'Pendiente' ? 
+                        `<input type="checkbox" value="${p.id}" class="pedido-checkbox w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">` 
+                        : `<i class="fas fa-check text-emerald-400 text-xs"></i>`}
+                </div>
 
-                        <div class="hidden md:block w-32">
-                             <span class="text-[9px] font-black uppercase px-2 py-1 rounded-full bg-${color}-50 text-${color}-600">
+                <div class="grid grid-cols-2 md:grid-cols-4 flex-1 items-center gap-4 ml-4">
+                    
+                    <div class="flex flex-col">
+                        <span class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Estación</span>
+                        <span class="font-bold text-slate-800 text-sm truncate uppercase">${p.estacion}</span>
+                    </div>
+
+                    <div class="flex flex-col">
+                        <span class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Producto / Litros</span>
+                        <span class="font-bold text-slate-600 text-xs uppercase">${p.producto} <span class="text-blue-500">— ${p.litros}L</span></span>
+                    </div>
+
+                    <div class="hidden md:flex flex-col">
+                        <span class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Estatus</span>
+                        <div>
+                            <span class="inline-block px-2 py-0.5 rounded-full bg-${color}-50 text-${color}-600 text-[9px] font-black uppercase">
                                 ${p.estatus}
-                             </span>
+                            </span>
                         </div>
                     </div>
 
-                    <button onclick="verDetallePedido('${p.id}')" class="text-slate-400 hover:text-slate-900 p-2">
-                        <i class="fas fa-chevron-right"></i>
-                    </button>
-                </div>`;
-            } else {
-                // DISEÑO ORIGINAL PARA GERENTES (Tu diseño actual)
-                return `
-                <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm mb-4">
-                    <div class="flex justify-between items-center">
-                        <div class="flex items-center gap-4">
-                            <div class="h-12 w-12 bg-${color}-50 text-${color}-600 rounded-2xl flex items-center justify-center text-xl">
-                                <i class="far ${p.estatus === 'Pendiente' ? 'fa-clock' : 'fa-box'}"></i>
-                            </div>
-                            <div>
-                                <span class="text-[10px] font-black uppercase text-${color}-600 tracking-widest">${p.estatus}</span>
-                                <h3 class="font-black text-slate-900 text-lg uppercase">${p.estacion}</h3>
-                                <p class="text-xs text-slate-400 font-bold uppercase">${p.producto} — ${p.litros} L</p>
-                            </div>
-                        </div>
-                        <button onclick="verDetallePedido('${p.id}')" class="bg-[#1e293b] text-white px-5 py-3 rounded-xl font-black text-[10px] uppercase hover:bg-slate-700 transition-all">
-                            Detalles
-                        </button>
+                    <div class="hidden md:flex flex-col items-end mr-6">
+                        <span class="text-[9px] font-black text-slate-400 uppercase tracking-tighter text-right">Monto</span>
+                        <span class="font-black text-slate-900 text-sm">${p.total}</span>
                     </div>
-                </div>`;
-            }
+                </div>
+
+                <button onclick="verDetallePedido('${p.id}')" class="bg-slate-100 group-hover:bg-blue-600 group-hover:text-white text-slate-400 w-8 h-8 rounded-lg flex items-center justify-center transition-all">
+                    <i class="fas fa-chevron-right text-xs"></i>
+                </button>
+            </div>`;
         }).join('');
 
     } catch (e) {
-        container.innerHTML = '<p class="text-red-500 text-center p-10 font-bold">Error al cargar.</p>';
+        console.error("Error:", e);
+        container.innerHTML = '<p class="text-red-500 text-center font-bold">Error de conexión.</p>';
     }
 }
-
 
 async function verDetallePedido(id) {
     const userData = JSON.parse(localStorage.getItem('usuario'));
