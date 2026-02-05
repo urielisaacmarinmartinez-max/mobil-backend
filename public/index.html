@@ -409,14 +409,43 @@ async function cargarPedidosDashboard() {
 }
 
     function loadConfig() {
-        const id = document.getElementById('selEstacion').value;
-        const est = estacionesData.find(e => (e.id || e.ID_Estacion) === id);
-        if (est) {
-            document.getElementById('dirAuto').value = est.direccion;
-            document.getElementById('creditoHeader').innerText = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(est.credito);
+    // 1. Validar que el selector de estación exista antes de pedir su valor
+    const selEstacion = document.getElementById('selEstacion');
+    if (!selEstacion) return; // Salir silenciosamente si el elemento no está en el DOM
+
+    const id = selEstacion.value;
+    
+    // 2. Validar que estacionesData exista y no esté vacío
+    if (!window.estacionesData || !Array.isArray(estacionesData)) {
+        console.warn("estacionesData no está disponible todavía.");
+        return;
+    }
+
+    const est = estacionesData.find(e => (e.id || e.ID_Estacion) === id);
+
+    if (est) {
+        // 3. Validar existencia antes de asignar valores
+        const dirInput = document.getElementById('dirAuto');
+        if (dirInput) {
+            dirInput.value = est.direccion || '';
+        }
+
+        const creditoHeader = document.getElementById('creditoHeader');
+        if (creditoHeader) {
+            const creditoFormateado = new Intl.NumberFormat('es-MX', { 
+                style: 'currency', 
+                currency: 'MXN' 
+            }).format(est.credito || 0);
+            
+            creditoHeader.innerText = creditoFormateado;
+        }
+
+        // 4. Asegurarse de que calcTotal exista antes de llamarla
+        if (typeof calcTotal === 'function') {
             calcTotal();
         }
     }
+}
 
     function calcTotal() {
         const id = document.getElementById('selEstacion').value;
