@@ -634,25 +634,26 @@ function loadConfig() {
         window.scrollTo(0, 0);
     }
 
-    function dibujarEstaciones() {
-    const container = document.getElementById('estacionesCardsContainer');
-    if (!container) return; // Seguridad
-
-    const userData = JSON.parse(localStorage.getItem('usuario'));
-    // Validación de seguridad para estacionesData
-    if (!window.estacionesData) {
-        container.innerHTML = `<p class="text-center p-10">Cargando datos de estaciones...</p>`;
-        return;
+    function irDashboard() {
+        document.getElementById('estacionesView').classList.add('hidden');
+        document.getElementById('dashboardView').classList.remove('hidden');
+        document.getElementById('pedidosView').classList.add('hidden');
+        window.scrollTo(0, 0);
     }
 
-    if (!userData || !userData.estaciones) return;
+    function dibujarEstaciones() {
+        const container = document.getElementById('estacionesCardsContainer');
+        const userData = JSON.parse(localStorage.getItem('usuario'));
+        if (!userData || !userData.estaciones) return;
 
-    const misEstacionesIds = userData.estaciones.split(',').map(s => s.trim());
-    const filtradas = estacionesData.filter(est => { 
-        // Usar ID_Estacion o id según lo que venga de tu API
-        return misEstacionesIds.includes(est.id || est.ID_Estacion)
-    });
-    
+        const misEstacionesIds = userData.estaciones.split(',').map(s => s.trim());
+        const filtradas = estacionesData.filter(est => { return misEstacionesIds.includes(est.id)});
+
+        if (filtradas.length === 0) {
+            container.innerHTML = `<div class="p-20 text-center"><p class="text-slate-400 font-bold">No hay datos disponibles.</p></div>`;
+            return;
+        }
+
         container.innerHTML = filtradas.map(est => {
             const cap = est.capacidad || { extra: 0, supreme: 0, diesel: 0 };
             const vol = est.volumenActual || { extra: 0, supreme: 0, diesel: 0 };
