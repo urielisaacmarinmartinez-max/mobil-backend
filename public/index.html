@@ -141,17 +141,15 @@ body[data-user-role="Logistica_Policon"] .pedido-checkbox {
         </header>
         <div id="estacionesCardsContainer" class="grid grid-cols-1 gap-8">
             </div>
-    </div> <div id="pedidosView" class="hidden">
+    <div id="pedidosView" class="hidden p-8 lg:p-12">
         <header class="flex justify-between items-start mb-10">
             <div>
                 <h1 class="text-4xl font-black tracking-tight text-slate-900">Mis Pedidos</h1>
-                <p class="text-slate-500 font-medium mt-1">Historial y seguimiento en tiempo real</p>
+                <p class="text-slate-500 font-medium mt-1">Historial y seguimiento de suministros</p>
             </div>
-            <div class="flex gap-4">
-                <button onclick="irDashboard()" class="bg-slate-800 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg hover:bg-slate-700 transition-all">
+            <button onclick="irDashboard()" class="bg-slate-800 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg hover:bg-slate-700 transition-all">
                 <i class="fas fa-arrow-left mr-2"></i> Volver al Dashboard
-                </button>
-            </div>
+            </button>
         </header>
 
         <div class="flex gap-2 mb-8 overflow-x-auto pb-2 no-scrollbar">
@@ -160,15 +158,34 @@ body[data-user-role="Logistica_Policon"] .pedido-checkbox {
             <button onclick="filtrarPedidos('Aceptado')" class="filter-btn bg-white text-slate-400 border border-slate-100 px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-blue-50 hover:text-blue-500">Aceptados</button>
             <button onclick="filtrarPedidos('En Ruta')" class="filter-btn bg-white text-slate-400 border border-slate-100 px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-purple-50 hover:text-purple-500">En Ruta</button>
             <button onclick="filtrarPedidos('Entregado')" class="filter-btn bg-white text-slate-400 border border-slate-100 px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-emerald-50 hover:text-emerald-500">Entregados</button>
-            <button onclick="filtrarPedidos('Cancelado')" class="filter-btn bg-white text-slate-400 border border-slate-100 px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-red-50 hover:text-red-500">Cancelados</button>
         </div>
 
-        <div id="listaPedidosCompleta" class="grid grid-cols-1 gap-4">
+        <div id="barra-programacion" class="hidden transform transition-all duration-300 translate-y-2 opacity-0 mb-6 sticky top-0 z-30">
+            <div class="bg-slate-900 rounded-[2.5rem] p-4 flex flex-wrap items-center justify-between gap-4 shadow-2xl border border-slate-800">
+                <div class="flex items-center gap-4 ml-4">
+                    <div class="h-10 w-10 bg-blue-600 rounded-xl flex items-center justify-center text-white">
+                        <i class="fas fa-layer-group"></i>
+                    </div>
+                    <div>
+                        <p class="text-[9px] text-slate-500 font-black uppercase tracking-widest">Lote Seleccionado</p>
+                        <p class="text-white font-bold text-sm"><span id="contador-seleccion">0</span> Pedidos</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 bg-slate-800 p-2 rounded-2xl border border-white/5">
+                    <label class="text-[9px] text-slate-400 font-black uppercase px-2">Día de Entrega:</label>
+                    <input type="date" id="fecha-bloque" class="bg-transparent text-white border-none focus:ring-0 font-bold text-sm outline-none cursor-pointer">
+                    <button onclick="confirmarProgramacionBloque()" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase transition-all">
+                        Confirmar Programa
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div id="modalTirilla" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
+        <div id="listaPedidosCompleta" class="flex flex-col gap-2">
+            <p class="text-slate-400 italic">Cargando pedidos...</p>
+        </div>
+    </div> <div id="modalTirilla" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl relative">
             <button onclick="cerrarModalTirilla()" class="absolute top-6 right-6 text-slate-300 hover:text-slate-900"><i class="fas fa-times text-xl"></i></button>
             <h2 id="modalEstacionNombre" class="text-2xl font-black text-slate-900 mb-1">---</h2>
@@ -197,62 +214,6 @@ body[data-user-role="Logistica_Policon"] .pedido-checkbox {
             </form>
         </div>
     </div>
-</main>
-
-<div id="pedidosView" class="hidden p-8 lg:p-12">
-    <header class="flex justify-between items-start mb-10">
-        <div>
-            <h1 class="text-4xl font-black tracking-tight text-slate-900">Mis Pedidos</h1>
-            <p class="text-slate-500 font-medium mt-1">Historial y seguimiento de suministros</p>
-        </div>
-        <button onclick="irDashboard()" class="bg-slate-800 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg hover:bg-slate-700 transition-all">
-            <i class="fas fa-arrow-left mr-2"></i> Volver
-        </button>
-    </header>
-
-    <div class="flex gap-2 mb-8 overflow-x-auto pb-2 no-scrollbar">
-        <button onclick="filtrarPedidos('Todos')" class="filter-btn bg-slate-900 text-white px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest">Todos</button>
-        <button onclick="filtrarPedidos('Pendiente')" class="filter-btn bg-white text-slate-400 border border-slate-100 px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-orange-50 hover:text-orange-500">Pendientes</button>
-        <button onclick="filtrarPedidos('Aceptado')" class="filter-btn bg-white text-slate-400 border border-slate-100 px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-blue-50 hover:text-blue-500">Aceptados</button>
-        <button onclick="filtrarPedidos('En Ruta')" class="filter-btn bg-white text-slate-400 border border-slate-100 px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-purple-50 hover:text-purple-500">En Ruta</button>
-        <button onclick="filtrarPedidos('Entregado')" class="filter-btn bg-white text-slate-400 border border-slate-100 px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-emerald-50 hover:text-emerald-500">Entregados</button>
-    </div>
-
-    <div class="flex gap-2 mb-8 overflow-x-auto pb-2 no-scrollbar">
-        <button onclick="filtrarPedidos('Todos')" class="filter-btn bg-slate-900 text-white px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest">Todos</button>
-        </div>
-
-    <div id="barra-programacion" class="hidden transform transition-all duration-300 translate-y-2 opacity-0 mb-6">
-        <div class="bg-slate-900 rounded-[2.5rem] p-4 flex flex-wrap items-center justify-between gap-4 shadow-2xl border border-slate-800">
-            <div class="flex items-center gap-4 ml-4">
-                <div class="h-10 w-10 bg-blue-600 rounded-xl flex items-center justify-center text-white">
-                    <i class="fas fa-layer-group"></i>
-                </div>
-                <div>
-                    <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest">Lote Seleccionado</p>
-                    <p class="text-white font-bold"><span id="contador-seleccion">0</span> Pedidos</p>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-3 bg-slate-800 p-2 rounded-2xl border border-white/5">
-                <label class="text-[10px] text-slate-400 font-black uppercase px-2">Día de Entrega:</label>
-                <input type="date" id="fecha-bloque" 
-                       class="bg-transparent text-white border-none focus:ring-0 font-bold text-sm cursor-pointer outline-none">
-                <button onclick="confirmarProgramacionBloque()" 
-                        class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase transition-all">
-                    Confirmar Programa
-                </button>
-            </div>
-        </div>
-    </div>
-    <div id="listaPedidosCompleta" class="grid grid-cols-1 gap-4">
-        <p class="text-slate-400 italic">Cargando pedidos...</p>
-    </div>
-
-    <div id="listaPedidosCompleta" class="grid grid-cols-1 gap-4">
-        <p class="text-slate-400 italic">Cargando pedidos...</p>
-    </div>
-</div>
 
     <div id="overlay" onclick="togglePanel()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity duration-300"></div>
     <div id="sidePanel" class="fixed right-0 top-0 h-full w-full max-w-lg bg-white z-50 shadow-2xl side-panel-transition translate-x-full p-10 overflow-y-auto">
@@ -1004,6 +965,60 @@ async function procesarCancelacion() {
         alert('Error de conexión con el servidor.');
     }
 }
+
+
+// --- LÓGICA DE CONTROL DE SELECCIÓN (LOGÍSTICA) ---
+
+// Escuchar cambios en los checkboxes
+document.addEventListener('change', (e) => {
+    if (e.target.classList.contains('pedido-checkbox')) {
+        const seleccionados = document.querySelectorAll('.pedido-checkbox:checked');
+        const barra = document.getElementById('barra-programacion');
+        const contador = document.getElementById('contador-seleccion');
+        
+        if (seleccionados.length > 0) {
+            barra.classList.remove('hidden');
+            // Pequeño delay para que la transición de Tailwind se note
+            setTimeout(() => {
+                barra.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+            contador.textContent = seleccionados.length;
+        } else {
+            barra.classList.add('translate-y-2', 'opacity-0');
+            setTimeout(() => barra.classList.add('hidden'), 300);
+        }
+    }
+});
+
+async function confirmarProgramacionBloque() {
+    const seleccionados = Array.from(document.querySelectorAll('.pedido-checkbox:checked')).map(cb => cb.value);
+    const fecha = document.getElementById('fecha-bloque').value;
+
+    if (!fecha) {
+        alert("⚠️ Selecciona una fecha para el bloque.");
+        return;
+    }
+
+    if (!confirm(`¿Programar ${seleccionados.length} pedidos para el ${fecha}?`)) return;
+
+    try {
+        const response = await fetch('/api/confirmar-bloque', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ idsPedidos: seleccionados, bloqueProgramacion: fecha })
+        });
+
+        const res = await response.json();
+        if (res.success) {
+            alert("✅ Bloque programado correctamente.");
+            renderizarPedidosLista('Pendiente'); // Recargar lista
+            document.getElementById('barra-programacion').classList.add('hidden');
+        }
+    } catch (error) {
+        alert("Error al procesar el bloque.");
+    }
+}
+
 
 // LANZADOR INICIAL
 window.onload = initDashboard;
