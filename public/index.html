@@ -784,64 +784,67 @@ async function cargarPedidosDashboard() {
             pedidos = pedidos.filter(p => p.estatus.toLowerCase() === filtro.toLowerCase());
         }
 
-        if (pedidos.length === 0) {
-            container.innerHTML = `
-                <div class="bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] p-12 text-center">
-                    <i class="fas fa-folder-open text-slate-300 text-4xl mb-4"></i>
-                    <p class="text-slate-500 font-bold">No se encontraron pedidos con estatus "${filtro}"</p>
-                </div>`;
-            return;
-        }
+        // --- SEGURIDAD DE ROL ---
+        const esLogistica = userData.rol === 'Logística' || userData.rol === 'Admin';
 
         container.innerHTML = pedidos.map(p => {
             const color = p.estatus === 'Pendiente' ? 'orange' : 
                           p.estatus === 'En Ruta' ? 'purple' : 
-                          p.estatus === 'Entregado' ? 'emerald' : 
-                          p.estatus === 'Cancelado' ? 'red' : 'blue';
+                          p.estatus === 'Entregado' ? 'emerald' : 'blue';
 
-            let icono = 'fa-box'; 
-            if (p.estatus === 'Pendiente') icono = 'fa-clock';
-            if (p.estatus === 'En Ruta')   icono = 'fa-truck-fast';
-            if (p.estatus === 'Entregado') icono = 'fa-check-circle';
-            if (p.estatus === 'Cancelado') icono = 'fa-ban';
-
-            // --- LÓGICA DEL CHECKBOX PARA LOGÍSTICA ---
-            // Solo aparece si el rol es Logística y el pedido está Pendiente
-            const esLogistica = true;
-            const mostrarCheckbox = esLogistica && p.estatus === 'Pendiente';
-
-            return `
-            <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-all mb-4 relative overflow-hidden">
-                <div class="flex flex-wrap justify-between items-center gap-4">
-                    <div class="flex items-center gap-4">
+            // Si es logística, usamos un diseño de "Fila compacta"
+            // Si es gerente, mantenemos tu diseño original de "Tarjeta"
+            if (esLogistica) {
+                return `
+                <div class="bg-white px-6 py-3 rounded-2xl border border-slate-100 shadow-sm hover:border-blue-300 transition-all mb-2 flex items-center justify-between">
+                    <div class="flex items-center gap-4 flex-1">
+                        ${p.estatus === 'Pendiente' ? `
+                            <input type="checkbox" value="${p.id}" class="pedido-checkbox w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                        ` : '<div class="w-5"></div>'}
                         
-                        ${mostrarCheckbox ? `
-                        <div class="flex items-center justify-center pr-2">
-                            <input type="checkbox" value="${p.id}" class="pedido-checkbox w-6 h-6 rounded-lg border-2 border-slate-200 text-slate-900 focus:ring-slate-900 transition-all cursor-pointer">
+                        <div class="text-xs font-black text-slate-400 w-16 uppercase">${p.id.slice(-5)}</div>
+                        
+                        <div class="flex-1">
+                            <h3 class="font-bold text-slate-800 text-sm uppercase">${p.estacion}</h3>
+                            <p class="text-[10px] text-slate-400 font-bold">${p.producto} — ${p.litros}L</p>
                         </div>
-                        ` : ''}
 
-                        <div class="h-12 w-12 bg-${color}-50 text-${color}-600 rounded-2xl flex items-center justify-center text-xl shadow-inner">
-                            <i class="far ${icono}"></i>
-                        </div>
-                        <div>
-                            <span class="text-[10px] font-black uppercase text-${color}-600 tracking-widest">${p.estatus}</span>
-                            <h3 class="font-black text-slate-900 text-lg uppercase leading-tight">${p.estacion}</h3>
-                            <p class="text-xs text-slate-400 font-bold uppercase">${p.producto} — ${p.litros} L</p>
+                        <div class="hidden md:block w-32">
+                             <span class="text-[9px] font-black uppercase px-2 py-1 rounded-full bg-${color}-50 text-${color}-600">
+                                ${p.estatus}
+                             </span>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <button onclick="verDetallePedido('${p.id}')" class="bg-[#1e293b] text-white px-5 py-3 rounded-xl font-black text-[10px] uppercase hover:bg-slate-700 transition-all shadow-sm">
+
+                    <button onclick="verDetallePedido('${p.id}')" class="text-slate-400 hover:text-slate-900 p-2">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>`;
+            } else {
+                // DISEÑO ORIGINAL PARA GERENTES (Tu diseño actual)
+                return `
+                <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm mb-4">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-4">
+                            <div class="h-12 w-12 bg-${color}-50 text-${color}-600 rounded-2xl flex items-center justify-center text-xl">
+                                <i class="far ${p.estatus === 'Pendiente' ? 'fa-clock' : 'fa-box'}"></i>
+                            </div>
+                            <div>
+                                <span class="text-[10px] font-black uppercase text-${color}-600 tracking-widest">${p.estatus}</span>
+                                <h3 class="font-black text-slate-900 text-lg uppercase">${p.estacion}</h3>
+                                <p class="text-xs text-slate-400 font-bold uppercase">${p.producto} — ${p.litros} L</p>
+                            </div>
+                        </div>
+                        <button onclick="verDetallePedido('${p.id}')" class="bg-[#1e293b] text-white px-5 py-3 rounded-xl font-black text-[10px] uppercase hover:bg-slate-700 transition-all">
                             Detalles
                         </button>
                     </div>
-                </div>
-            </div>`;
+                </div>`;
+            }
         }).join('');
 
     } catch (e) {
-        console.error("Error:", e);
-        container.innerHTML = '<p class="text-red-500 text-center p-10 font-bold">Error al conectar con el servidor.</p>';
+        container.innerHTML = '<p class="text-red-500 text-center p-10 font-bold">Error al cargar.</p>';
     }
 }
 
