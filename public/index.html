@@ -794,7 +794,7 @@ async function renderizarPedidosLista(filtro = 'Todos') {
         // --- VALIDACIÓN DE ROL ---
         // Forzamos 'true' momentáneamente para que VEAS el cambio. 
         // Luego lo regresamos a: userData.rol === 'Logística' || userData.rol === 'Admin'
-        const esLogistica = true; 
+        const esLogistica = userData.rol === 'Logística' || userData.rol === 'Admin'; 
 
         container.innerHTML = pedidos.map(p => {
             const color = p.estatus === 'Pendiente' ? 'orange' : 
