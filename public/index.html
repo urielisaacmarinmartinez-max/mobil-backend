@@ -813,56 +813,59 @@ async function verDetallePedido(id) {
         const response = await fetch(`/api/obtener-pedido-detallado?id=${id}`);
         const p = await response.json();
 
-        // --- EL DETECTIVE (Imprimirá en tu consola F12 los nombres reales de las columnas) ---
-        console.log("ESTRUCTURA REAL DE TU BASE DE DATOS:", p);
-
-        // 1. IDENTIFICAR ESTATUS
+        // 1. IDENTIFICAR ESTATUS Y ROL
         let esGerente = userData.rol === 'Gerente Estación';
-        let estaConfirmado = p.confirmacion_reubicacion && p.confirmacion_reubicacion.trim() !== "";
+        // Ajustamos la lógica de confirmación con el nombre exacto de la columna
+        let estaConfirmado = p.confirmacion && p.confirmacion.trim() !== "";
         document.getElementById('det_status').textContent = (esGerente && !estaConfirmado) ? "Pendiente" : (p.estatus || '---');
 
-        // 2. DATOS FIJOS (Los que ya te funcionan)
+        // 2. CABECERA Y DATOS PRINCIPALES
         document.getElementById('det_estacion').textContent = p.estacion || '---';
         document.getElementById('det_producto').textContent = p.producto || '---';
         document.getElementById('det_litros').textContent = `${p.litros || '0'} L`;
         document.getElementById('det_prioridad').textContent = p.prioridad || 'Normal';
-
-        // 3. BUSCADOR DINÁMICO DE FECHA (Columna B)
-        // Buscamos cualquier llave que contenga "fecha" o "registro"
-        const keyFecha = Object.keys(p).find(k => k.toLowerCase().includes('fecha') && k.toLowerCase().includes('registro')) || 'fecha_registro';
-        const fechaRaw = p[keyFecha] || p.fecha || '---';
         
+        // NUEVO: Bloque de Programación
+        const elBloque = document.getElementById('det_bloque');
+        if(elBloque) {
+            elBloque.textContent = p.bloque || 'Sin Programar';
+            elBloque.className = p.bloque ? "font-bold text-blue-700" : "text-slate-400";
+        }
+
+        // 3. FECHA DE SOLICITUD (Columna B - FECHA DE REGISTRO)
         const elFecha = document.getElementById('det_fecha_solicitud');
         const elHora = document.getElementById('det_hora_solicitud');
-        if(elFecha) {
-            const parts = String(fechaRaw).split(',');
+        if(elFecha && p.fecha_registro) {
+            const parts = String(p.fecha_registro).split(',');
             elFecha.textContent = parts[0].trim();
             if(elHora) elHora.textContent = parts[1] ? parts[1].trim() : '';
         }
 
-        // 4. BUSCADOR DINÁMICO DE CANTIDAD EXACTA (Columna R)
-        // Buscamos cualquier llave que tenga "cantidad" y "exacta"
-        const keyExacta = Object.keys(p).find(k => k.toLowerCase().includes('cantidad') && k.toLowerCase().includes('exacta'));
-        const valorExacto = keyExacta ? p[keyExacta] : (p.cantidad_exacta || p.litros_reales);
-        
+        // 4. CANTIDAD EXACTA (Columna R)
         const elCantEx = document.getElementById('det_cantidad_exacta_new');
         if (elCantEx) {
-            if (valorExacto && valorExacto != "0" && valorExacto != "") {
-                elCantEx.textContent = `${valorExacto} L`;
-                elCantEx.className = "text-sm font-black text-slate-800";
+            if (p.cantidad_exacta && p.cantidad_exacta != "0" && p.cantidad_exacta != "") {
+                elCantEx.textContent = `${p.cantidad_exacta} L`;
+                elCantEx.classList.add('font-black', 'text-slate-900');
             } else {
-                elCantEx.textContent = '---'; // Si está vacío en Excel, muestra guiones
+                elCantEx.textContent = '---';
+                elCantEx.classList.remove('font-black', 'text-slate-900');
             }
         }
 
-        // 5. OTROS DATOS DE LOGÍSTICA
+        // 5. DATOS DE LOGÍSTICA (Bloque Azul)
         document.getElementById('det_fletera_new').textContent = p.fletera || 'PENDIENTE';
         document.getElementById('det_unidad_new').textContent = p.unidad || 'SIN ASIGNAR';
         document.getElementById('det_eta_new').textContent = p.eta || '--:--';
+        
+        // NUEVO: Mostrar Placas si existen
+        const elPlacas = document.getElementById('det_placas_new');
+        if(elPlacas) elPlacas.textContent = p.placas || '';
 
-        // 6. VISIBILIDAD
+        // 6. CONTROL DE VISIBILIDAD DE ASIGNACIÓN
         const areaAsignacion = document.getElementById('det_area_asignacion_nueva');
         if (areaAsignacion) {
+            // Si es gerente y no está confirmado, ocultamos el bloque azul
             (esGerente && !estaConfirmado) ? areaAsignacion.classList.add('hidden') : areaAsignacion.classList.remove('hidden');
         }
 
@@ -870,11 +873,12 @@ async function verDetallePedido(id) {
         const areaCancel = document.getElementById('area_cancelacion');
         if(areaCancel) {
             p.estatus === 'Pendiente' ? areaCancel.classList.remove('hidden') : areaCancel.classList.add('hidden');
-            areaCancel.querySelector('button').onclick = () => procesarCancelacion();
+            areaCancel.querySelector('button').onclick = () => procesarCancelacion(id);
         }
 
     } catch (e) {
-        console.error("Error crítico:", e);
+        console.error("Error al cargar detalles del pedido:", e);
+        document.getElementById('det_estacion').textContent = "Error al cargar";
     }
 }
 

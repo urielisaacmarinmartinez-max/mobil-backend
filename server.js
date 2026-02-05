@@ -222,20 +222,21 @@ app.get('/api/obtener-pedido-detallado', async (req, res) => {
         if (p) {
             res.json({
                 id: p.get('FOLIO'),
-                fecha_registro: p.get('FECHA DE REGISTRO'), // <--- FALTABA ESTE (Columna B)
+                fecha_registro: p.get('FECHA DE REGISTRO'),
+                bloque: p.get('BLOQUE DE PROGRAMACIÓN'), // Nueva columna
                 estacion: p.get('ESTACIÓN'),
                 estatus: p.get('ESTATUS'),
                 producto: p.get('TIPO DE PRODUCTO'),
                 litros: p.get('LITROS'),
-                prioridad: p.get('PRIORIDAD'), // <--- FALTABA ESTE
+                prioridad: p.get('PRIORIDAD'),
                 orden: p.get('ORDEN'),
                 fletera: p.get('FLETERA'),
                 unidad: p.get('UNIDAD'),
-                placa1: p.get('PLACAS 1'),
+                placas: `${p.get('PLACA 1') || ''} / ${p.get('PLACA 2') || ''}`,
                 operador: p.get('OPERADOR'),
                 eta: p.get('ETA'),
-                cantidad_exacta: p.get('CANTIDAD EXACTA'), // <--- FALTABA ESTE (Columna R)
-                confirmacion_reubicacion: p.get('CONFIRMACIÓN REUBICACIÓN')
+                cantidad_exacta: p.get('CANTIDAD EXACTA'),
+                confirmacion: p.get('CONFIRMACIÓN O REUBICACIÓN')
             });
         } else {
             res.status(404).json({ error: "Pedido no encontrado" });
@@ -243,6 +244,57 @@ app.get('/api/obtener-pedido-detallado', async (req, res) => {
     } catch (error) {
         console.error("Error al obtener detalle:", error);
         res.status(500).json({ error: "Error interno" });
+    }
+});
+
+
+// --- 7. LÓGICA DE REUBICACIÓN (SWAP) ---
+app.post('/api/reubicar-pedido', async (req, res) => {
+    const { folioOriginal, folioDestino, idOrden } = req.body;
+    
+    try {
+        await doc.loadInfo();
+        const sheetPedidos = doc.sheetsByTitle['Pedidos'];
+        const sheetOrdenes = doc.sheetsByTitle['Ordenes de Carga'];
+        
+        const rowsP = await sheetPedidos.getRows();
+        const rowsO = await sheetOrdenes.getRows();
+
+        const pOriginal = rowsP.find(r => r.get('FOLIO') === folioOriginal);
+        const pDestino = rowsP.find(r => r.get('FOLIO') === folioDestino);
+        const ordenCarga = rowsO.find(r => r.get('ORDEN') === idOrden);
+
+        if (pOriginal && pDestino) {
+            // Transferir logística al nuevo pedido
+            pDestino.set('FLETERA', pOriginal.get('FLETERA'));
+            pDestino.set('UNIDAD', pOriginal.get('UNIDAD'));
+            pDestino.set('PLACA 1', pOriginal.get('PLACA 1'));
+            pDestino.set('PLACA 2', pOriginal.get('PLACA 2'));
+            pDestino.set('OPERADOR', pOriginal.get('OPERADOR'));
+            pDestino.set('ORDEN', idOrden);
+            pDestino.set('ESTATUS', 'En Ruta');
+            
+            // "Limpiar" el original y regresarlo a pendiente
+            pOriginal.set('ORDEN', '');
+            pOriginal.set('FLETERA', '');
+            pOriginal.set('UNIDAD', '');
+            pOriginal.set('ESTATUS', 'Pendiente');
+            pOriginal.set('CONFIRMACIÓN O REUBICACIÓN', `Carga reubicada al FOLIO: ${folioDestino}`);
+
+            // Actualizar hoja de Órdenes
+            if (ordenCarga) {
+                ordenCarga.set('PEDIDO ACTUAL', folioDestino);
+                ordenCarga.set('ESTATUS DE ORDEN', 'Reubicada');
+            }
+
+            await pDestino.save();
+            await pOriginal.save();
+            if (ordenCarga) await ordenCarga.save();
+
+            res.json({ success: true });
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
 });
 
