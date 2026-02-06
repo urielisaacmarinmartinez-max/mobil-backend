@@ -733,46 +733,54 @@ async function cargarPedidosDashboard() {
     }
 
     function dibujarEstaciones() {
-        const container = document.getElementById('estacionesCardsContainer');
-        const userData = JSON.parse(localStorage.getItem('usuario'));
-        if (!userData || !userData.estaciones) return;
+    const container = document.getElementById('estacionesCardsContainer');
+    const userData = JSON.parse(localStorage.getItem('usuario'));
+    if (!userData || !userData.estaciones) return;
 
-        const misEstacionesIds = userData.estaciones.split(',').map(s => s.trim());
-        const filtradas = estacionesData.filter(est => { return misEstacionesIds.includes(est.id)});
+    // 1. Lógica de filtrado respetando al Admin
+    const misEstacionesIds = userData.estaciones.split(',').map(s => s.trim());
+    const esAdmin = misEstacionesIds.includes('TODAS') || userData.rol === 'Logistica_Policon';
 
-        if (filtradas.length === 0) {
-            container.innerHTML = `<div class="p-20 text-center"><p class="text-slate-400 font-bold">No hay datos disponibles.</p></div>`;
-            return;
-        }
+    // Si es Admin, usamos todo lo que hay en estacionesData. Si no, filtramos.
+    const filtradas = esAdmin 
+        ? estacionesData 
+        : estacionesData.filter(est => misIds.includes(est.id));
 
-        container.innerHTML = filtradas.map(est => {
-            const cap = est.capacidad || { extra: 0, supreme: 0, diesel: 0 };
-            const vol = est.volumenActual || { extra: 0, supreme: 0, diesel: 0 };
-            const vta = est.ventaPromedio || { extra: 0, supreme: 0, diesel: 0 };
-            
-            return `
-            <div class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100 mb-6">
-                <div class="flex justify-between items-start mb-6">
-                    <div>
-                        <span class="text-[10px] font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full mb-2 inline-block">${est.id}</span>
-                        <h2 class="text-2xl font-black text-slate-800">${est.nombre || 'Estación'}</h2>
-                        <p class="text-[10px] text-slate-400">${est.direccion || ''}</p>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    ${renderFuelCard('EXTRA', 'emerald', cap.extra, vol.extra, vta.extra)}
-                    ${renderFuelCard('SUPREME', 'red', cap.supreme, vol.supreme, vta.supreme)}
-                    ${Number(cap.diesel) > 0 
-                        ? renderFuelCard('DIESEL', 'slate', cap.diesel, vol.diesel, vta.diesel) 
-                        : `<div class="bg-slate-50 rounded-3xl border border-dashed border-slate-200 flex items-center justify-center p-8 text-[8px] font-bold text-slate-300 uppercase">Sin Diesel</div>`}
-                </div>
-                <button onclick="abrirModalTirilla('${est.id}', '${est.nombre}')" 
-                        class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-sm uppercase hover:bg-blue-600 transition-all shadow-xl">
-                    Actualizar Inventario
-                </button>
-            </div>`;
-        }).join('');
+    // 2. Validación de datos
+    if (filtradas.length === 0) {
+        container.innerHTML = `<div class="p-20 text-center"><p class="text-slate-400 font-bold">No hay datos disponibles para mostrar.</p></div>`;
+        return;
     }
+
+    // 3. Renderizado (TU DISEÑO ORIGINAL INTACTO)
+    container.innerHTML = filtradas.map(est => {
+        const cap = est.capacidad || { extra: 0, supreme: 0, diesel: 0 };
+        const vol = est.volumenActual || { extra: 0, supreme: 0, diesel: 0 };
+        const vta = est.ventaPromedio || { extra: 0, supreme: 0, diesel: 0 };
+        
+        return `
+        <div class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100 mb-6">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <span class="text-[10px] font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full mb-2 inline-block">${est.id}</span>
+                    <h2 class="text-2xl font-black text-slate-800">${est.nombre || 'Estación'}</h2>
+                    <p class="text-[10px] text-slate-400">${est.direccion || ''}</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                ${renderFuelCard('EXTRA', 'emerald', cap.extra, vol.extra, vta.extra)}
+                ${renderFuelCard('SUPREME', 'red', cap.supreme, vol.supreme, vta.supreme)}
+                ${Number(cap.diesel) > 0 
+                    ? renderFuelCard('DIESEL', 'slate', cap.diesel, vol.diesel, vta.diesel) 
+                    : `<div class="bg-slate-50 rounded-3xl border border-dashed border-slate-200 flex items-center justify-center p-8 text-[8px] font-bold text-slate-300 uppercase">Sin Diesel</div>`}
+            </div>
+            <button onclick="abrirModalTirilla('${est.id}', '${est.nombre}')" 
+                    class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-sm uppercase hover:bg-blue-600 transition-all shadow-xl">
+                Actualizar Inventario
+            </button>
+        </div>`;
+    }).join('');
+}
 
     function renderFuelCard(label, color, cap, vol, vta) {
         const capacidad = Number(cap || 0).toLocaleString();
