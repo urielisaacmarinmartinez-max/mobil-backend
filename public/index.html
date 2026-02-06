@@ -434,20 +434,7 @@ body:not([data-user-role="Logística"]):not([data-user-role="Admin"]) .w-10.flex
     }
 }
 
-// Funciones de apoyo para el tiempo
-function setFechaHoy() {
-    const hoy = new Date().toISOString().split('T')[0];
-    document.getElementById('fechaFiltroPedidos').value = hoy;
-    cargarPedidosDashboard();
-}
 
-function setFechaManana() {
-    const manana = new Date();
-    manana.setDate(manana.getDate() + 1);
-    const fechaStr = manana.toISOString().split('T')[0];
-    document.getElementById('fechaFiltroPedidos').value = fechaStr;
-    cargarPedidosDashboard();
-}
 
     // NUEVA FUNCIÓN: Dibuja los pedidos y actualiza contadores
 async function cargarPedidosDashboard() {
@@ -901,6 +888,22 @@ function dibujarEstaciones() {
         
         renderizarPedidosLista(estatus);
     }
+
+// Funciones de apoyo para el tiempo
+function setFechaHoy() {
+    const hoy = new Date().toISOString().split('T')[0];
+    document.getElementById('fechaFiltroPedidos').value = hoy;
+    cargarPedidosDashboard();
+}
+
+function setFechaManana() {
+    const manana = new Date();
+    manana.setDate(manana.getDate() + 1);
+    const fechaStr = manana.toISOString().split('T')[0];
+    document.getElementById('fechaFiltroPedidos').value = fechaStr;
+    cargarPedidosDashboard();
+}
+
 
 async function renderizarPedidosLista(filtro = 'Todos') {
     const container = document.getElementById('listaPedidosCompleta');
