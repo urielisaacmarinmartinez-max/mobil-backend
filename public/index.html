@@ -732,27 +732,34 @@ async function cargarPedidosDashboard() {
         window.scrollTo(0, 0);
     }
 
-    function dibujarEstaciones() {
+function dibujarEstaciones() {
     const container = document.getElementById('estacionesCardsContainer');
     const userData = JSON.parse(localStorage.getItem('usuario'));
-    if (!userData || !userData.estaciones) return;
+    
+    // Seguridad básica
+    if (!container || !userData || !userData.estaciones) return;
 
-    // 1. Lógica de filtrado respetando al Admin
-    const misEstacionesIds = userData.estaciones.split(',').map(s => s.trim());
+    // 1. Identificamos los IDs y si es Admin
+    const misEstacionesIds = userData.estaciones.split(',').map(s => s.trim().toUpperCase());
     const esAdmin = misEstacionesIds.includes('TODAS') || userData.rol === 'Logistica_Policon';
 
-    // Si es Admin, usamos todo lo que hay en estacionesData. Si no, filtramos.
+    // 2. FILTRADO CORREGIDO:
+    // Si es admin usa todo (estacionesData ya viene cargada de la función anterior)
+    // Si es gerente, comparamos sus IDs contra el ID de la estación
     const filtradas = esAdmin 
         ? estacionesData 
-        : estacionesData.filter(est => misIds.includes(est.id));
+        : estacionesData.filter(est => {
+            const idEst = est.id ? est.id.toString().toUpperCase() : '';
+            return misEstacionesIds.includes(idEst);
+        });
 
-    // 2. Validación de datos
+    // 3. Validación de visualización
     if (filtradas.length === 0) {
-        container.innerHTML = `<div class="p-20 text-center"><p class="text-slate-400 font-bold">No hay datos disponibles para mostrar.</p></div>`;
+        container.innerHTML = `<div class="p-20 text-center"><p class="text-slate-400 font-bold">No hay estaciones asignadas para mostrar.</p></div>`;
         return;
     }
 
-    // 3. Renderizado (TU DISEÑO ORIGINAL INTACTO)
+    // 4. TU DISEÑO ORIGINAL (INTACTO)
     container.innerHTML = filtradas.map(est => {
         const cap = est.capacidad || { extra: 0, supreme: 0, diesel: 0 };
         const vol = est.volumenActual || { extra: 0, supreme: 0, diesel: 0 };
