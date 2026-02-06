@@ -127,6 +127,42 @@ body:not([data-user-role="Logística"]):not([data-user-role="Admin"]) .w-10.flex
                 <i id="syncIcon" class="fas fa-sync-alt mr-2"></i> Actualizar
             </button>
         </div>
+        
+
+        <section id="seccion-pedidos" class="p-6">
+    
+    <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 mb-8">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+                <h3 class="text-2xl font-black text-slate-900 tracking-tighter">Programación de Cargas</h3>
+                <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Gestión por Fecha de Entrega</p>
+            </div>
+            
+            <div class="flex items-center gap-2 bg-slate-50 p-2 rounded-[1.5rem] border border-slate-100">
+                <input type="date" id="fechaFiltroPedidos" 
+                       class="bg-transparent border-none font-black text-slate-700 outline-none px-4 py-2 focus:ring-0"
+                       onchange="cargarPedidosDashboard()">
+                
+                <div class="h-8 w-[1px] bg-slate-200 mx-2"></div>
+                
+                <button onclick="setFechaHoy()" 
+                        class="px-4 py-2 bg-white rounded-xl shadow-sm text-[10px] font-black text-slate-600 hover:bg-slate-900 hover:text-white transition-all">
+                    HOY
+                </button>
+                <button onclick="setFechaManana()" 
+                        class="px-4 py-2 bg-white rounded-xl shadow-sm text-[10px] font-black text-slate-600 hover:bg-slate-900 hover:text-white transition-all">
+                    MAÑANA
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="pedidosContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        </div>
+</section>
+
+
+
         <div id="pedidosContainer" class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <p class="text-slate-400 italic">No hay pedidos recientes para mostrar.</p>
         </div>
@@ -396,6 +432,21 @@ body:not([data-user-role="Logística"]):not([data-user-role="Admin"]) .w-10.flex
     } finally {
         if (icon) setTimeout(() => icon.classList.remove('spin-anim'), 1000);
     }
+}
+
+// Funciones de apoyo para el tiempo
+function setFechaHoy() {
+    const hoy = new Date().toISOString().split('T')[0];
+    document.getElementById('fechaFiltroPedidos').value = hoy;
+    cargarPedidosDashboard();
+}
+
+function setFechaManana() {
+    const manana = new Date();
+    manana.setDate(manana.getDate() + 1);
+    const fechaStr = manana.toISOString().split('T')[0];
+    document.getElementById('fechaFiltroPedidos').value = fechaStr;
+    cargarPedidosDashboard();
 }
 
     // NUEVA FUNCIÓN: Dibuja los pedidos y actualiza contadores
