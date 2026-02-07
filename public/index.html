@@ -313,38 +313,42 @@ body:not([data-user-role="Logística"]):not([data-user-role="Admin"]) .w-10.flex
 
     function configurarInterfazPorRol(rol) {
         document.body.setAttribute('data-user-role', rol);
-    if (rol !== 'Fletera') {
-        const todosLosBotones = document.querySelectorAll('nav button');
-        todosLosBotones.forEach(btn => btn.style.display = 'flex');
-        return; 
-    }
-
-    // Lógica para Fletera
-    const botones = document.querySelectorAll('nav button');
-    botones.forEach(btn => {
-        const texto = btn.innerText.toLowerCase();
-        if (texto.includes('estaciones') || texto.includes('créditos') || texto.includes('creditos')) {
-            btn.style.setProperty('display', 'none', 'important');
-        }
-    });
-
-
-    const menuContainer = document.querySelector('nav');
-    
-    if (menuContainer && !document.getElementById('btn-operadores')) {
-        const estiloClase = "w-full flex items-center gap-4 p-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl transition-all font-semibold text-left";
         
-        const htmlNuevos = `
-            <button id="btn-operadores" onclick="irOperadores()" class="${estiloClase}">
-                <i class="fas fa-users-cog"></i> Operadores
-            </button>
-            <button id="btn-unidades" onclick="irUnidades()" class="${estiloClase}">
-                <i class="fas fa-truck-moving"></i> Unidades
-            </button>
-        `;
-        menuContainer.insertAdjacentHTML('beforeend', htmlNuevos);
+        // Mostrar/Ocultar barra de programación solo para Logística
+        const barraLogistica = document.getElementById('barra-programacion');
+        if (barraLogistica) {
+            barraLogistica.style.display = (rol === 'Logistica_Policon' || rol === 'Admin') ? 'block' : 'none';
+        }
+
+        const botones = document.querySelectorAll('nav button');
+        botones.forEach(btn => {
+            const texto = btn.innerText.toLowerCase();
+            // Lógica para Fletera
+            if (rol === 'Fletera') {
+                if (texto.includes('estaciones') || texto.includes('créditos')) {
+                    btn.style.setProperty('display', 'none', 'important');
+                }
+            } else {
+                btn.style.display = 'flex';
+            }
+        });
+
+        // Botones extra para Fleteras
+        if (rol === 'Fletera') {
+            const menuContainer = document.querySelector('nav');
+            if (menuContainer && !document.getElementById('btn-operadores')) {
+                const estiloClase = "w-full flex items-center gap-4 p-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl transition-all font-semibold text-left";
+                const htmlNuevos = `
+                    <button id="btn-operadores" onclick="irOperadores()" class="${estiloClase}">
+                        <i class="fas fa-users-cog"></i> Operadores
+                    </button>
+                    <button id="btn-unidades" onclick="irUnidades()" class="${estiloClase}">
+                        <i class="fas fa-truck-moving"></i> Unidades
+                    </button>`;
+                menuContainer.insertAdjacentHTML('beforeend', htmlNuevos);
+            }
+        }
     }
-}
 
 
     async function sincronizar() {
