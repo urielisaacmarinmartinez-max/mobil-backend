@@ -932,6 +932,22 @@ async function renderizarPedidosLista(filtro = 'Todos') {
     }
 }
 
+// Lógica de selección por lote
+function actualizarSeleccionados() {
+    const seleccionados = document.querySelectorAll('.pedido-checkbox:checked').length;
+    const barra = document.getElementById('lote-acciones');
+    const contador = document.getElementById('contador-seleccion');
+    
+    if (barra) {
+        if (seleccionados > 0) {
+            barra.classList.remove('hidden');
+            if (contador) contador.innerText = seleccionados;
+        } else {
+            barra.classList.add('hidden');
+        }
+    }
+}
+
 async function verDetallePedido(id) {
     const userData = JSON.parse(localStorage.getItem('usuario'));
     if (!userData) return;
