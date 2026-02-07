@@ -849,15 +849,14 @@ function setFechaManana() {
     }
 }
 
-// --- RENDERIZADO CON ACTIVACIÓN DE CHECKBOXES ---
 async function renderizarPedidosLista(filtro = 'Todos') {
     const container = document.getElementById('listaPedidosCompleta');
     const userData = JSON.parse(localStorage.getItem('usuario'));
     if (!userData || !container) return;
 
+    // 1. Visibilidad del panel de control
     const controlProgramacion = document.getElementById('control-programacion');
     const esLogistica = userData.rol === 'Logistica_Policon' || userData.rol === 'Admin';
-
     if (controlProgramacion) {
         controlProgramacion.style.display = esLogistica ? 'block' : 'none';
     }
@@ -879,22 +878,26 @@ async function renderizarPedidosLista(filtro = 'Todos') {
 
         if (pedidos.length === 0) {
             container.innerHTML = `<p class="p-10 text-center font-bold text-slate-400">No hay pedidos registrados para el día seleccionado.</p>`;
-            // Ocultamos el panel si no hay pedidos
-            actualizarSeleccionados();
+            actualizarSeleccionados(); // Oculta la barra si no hay nada
             return;
         }
 
         container.innerHTML = pedidos.map(p => {
-            const color = p.estatus === 'Pendiente' ? 'orange' : 
-                          p.estatus === 'En Ruta' ? 'purple' : 
-                          p.estatus === 'Entregado' ? 'emerald' : 'blue';
+            // Normalizamos el estatus para la comparación
+            const estatusNormalizado = p.estatus ? p.estatus.trim().toLowerCase() : '';
+            
+            const color = estatusNormalizado === 'pendiente' ? 'orange' : 
+                          estatusNormalizado === 'en ruta' ? 'purple' : 
+                          estatusNormalizado === 'entregado' ? 'emerald' : 'blue';
+
+            // AQUÍ ESTÁ EL CAMBIO: Aceptamos tanto 'pendiente' como 'aceptado' para programar
+            const permiteSeleccion = estatusNormalizado === 'pendiente' || estatusNormalizado === 'aceptado';
 
             return `
             <div class="group bg-white hover:bg-slate-50 border-b border-slate-100 flex items-center py-3 px-4 transition-all first:rounded-t-3xl last:rounded-b-3xl">
                 
                 <div class="w-10 flex justify-center">
-                    ${p.estatus === 'Pendiente' ? 
-                        // CORRECCIÓN: Se agregó onchange="actualizarSeleccionados()"
+                    ${permiteSeleccion ? 
                         `<input type="checkbox" value="${p.id}" onchange="actualizarSeleccionados()" class="pedido-checkbox w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">` 
                         : `<i class="fas fa-check text-emerald-400 text-xs"></i>`}
                 </div>
@@ -928,7 +931,6 @@ async function renderizarPedidosLista(filtro = 'Todos') {
             </div>`;
         }).join('');
         
-        // Sincronizar el estado de la barra al terminar de renderizar
         actualizarSeleccionados();
 
     } catch (e) {
