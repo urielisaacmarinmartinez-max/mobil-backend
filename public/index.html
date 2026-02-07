@@ -46,19 +46,19 @@ body:not([data-user-role="Logística"]):not([data-user-role="Admin"]) .w-10.flex
             </div>
 
             <nav class="space-y-1">
-    <button onclick="irDashboard()" class="w-full flex items-center gap-4 p-4 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-900/20">
-        <i class="fas fa-th-large"></i> Dashboard
-    </button>
-    
-    <button onclick="irMisEstaciones()" class="w-full flex items-center gap-4 p-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl transition-all font-semibold text-left">
-        <i class="fas fa-store"></i> Mis Estaciones
-    </button>
+                <button onclick="irDashboard()" class="w-full flex items-center gap-4 p-4 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-900/20">
+                    <i class="fas fa-th-large"></i> Dashboard
+                </button>
+                
+                <button onclick="irMisEstaciones()" class="w-full flex items-center gap-4 p-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl transition-all font-semibold text-left">
+                    <i class="fas fa-store"></i> Mis Estaciones
+                </button>
 
-    <button onclick="irMisPedidos()" class="w-full flex items-center gap-4 p-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl transition-all font-semibold text-left">
-    <i class="fas fa-clipboard-list"></i> Mis Pedidos
-</button>
+                <button onclick="irMisPedidos()" class="w-full flex items-center gap-4 p-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl transition-all font-semibold text-left">
+                    <i class="fas fa-clipboard-list"></i> Mis Pedidos
+                </button>
 
-                <button onclick="irMisCréditos()" class="flex items-center gap-4 p-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl transition-all font-semibold">
+                <button onclick="irMisCréditos()" class="w-full flex items-center gap-4 p-4 text-slate-400 hover:bg-white/5 hover:text-white rounded-2xl transition-all font-semibold text-left">
                     <i class="fas fa-wallet"></i> Mis Créditos
                 </button>
             </nav>
@@ -78,220 +78,158 @@ body:not([data-user-role="Logística"]):not([data-user-role="Admin"]) .w-10.flex
         </div>
     </aside>
 
-   <main class="flex-1 overflow-y-auto p-8 lg:p-12 relative">
-    
-    <div id="dashboardView">
-        <header class="flex justify-between items-start mb-10">
-            <div>
-                <h1 class="text-4xl font-black tracking-tight text-slate-900">Dashboard</h1>
-                <p class="text-slate-500 font-medium mt-1 text-blue-600" id="welcomeMsg">Hola, cargando datos...</p>
-
-            
-            <button onclick="togglePanel()" class="bg-red-600 text-white px-8 py-4 rounded-2xl font-bold shadow-xl shadow-red-200 hover:scale-105 active:scale-95 transition-all">
-                + Nuevo Pedido
-            </button>
-        </header>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-            <div class="bg-white p-8 rounded-[2rem] card-shadow border border-slate-100 flex flex-col justify-between h-48 relative overflow-hidden">
-                <div class="flex justify-between items-start z-10">
-                    <p class="text-[11px] font-black text-slate-400 uppercase tracking-[0.15em]">Pendientes</p>
-                    <div class="h-10 w-10 bg-orange-50 rounded-xl flex items-center justify-center text-orange-500"><i class="far fa-clock text-lg"></i></div>
-                </div>
-                <h3 id="countPendientes" class="text-5xl font-black text-slate-900 z-10">0</h3>
-                <p class="text-[11px] font-bold text-slate-400 z-10">Por confirmar</p>
-            </div>
-            
-            <div class="bg-white p-8 rounded-[2rem] card-shadow border border-slate-100 flex flex-col justify-between h-48 relative overflow-hidden">
-                <div class="flex justify-between items-start z-10">
-                    <p class="text-[11px] font-black text-slate-400 uppercase tracking-[0.15em]">En Ruta</p>
-                    <div class="h-10 w-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-500"><i class="fas fa-truck text-lg"></i></div>
-                </div>
-                <h3 id="countEnRuta" class="text-5xl font-black text-slate-900 z-10">0</h3>
-                <p class="text-[11px] font-bold text-slate-400 z-10">Entregas en camino</p>
-            </div>
-
-            <div class="bg-white p-8 rounded-[2rem] card-shadow border border-slate-100 flex flex-col justify-between h-48 relative overflow-hidden">
-                <div class="flex justify-between items-start z-10">
-                    <p class="text-[11px] font-black text-slate-400 uppercase tracking-[0.15em]">Entregados</p>
-                    <div class="h-10 w-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-500"><i class="fas fa-check-circle text-lg"></i></div>
-                </div>
-                <h3 id="countEntregados" class="text-5xl font-black text-slate-900 z-10">0</h3>
-                <p class="text-[11px] font-bold text-slate-400 z-10">Historial completado</p>
-            </div>
-        </div>
-
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-black text-slate-900">Pedidos Recientes</h2>
-            <button onclick="sincronizar()" class="text-blue-600 font-bold text-sm hover:underline">
-                <i id="syncIcon" class="fas fa-sync-alt mr-2"></i> Actualizar
-            </button>
-        </div>
+    <main class="flex-1 overflow-y-auto p-8 lg:p-12 relative">
         
-
-        <section id="seccion-pedidos" class="p-6">
-    
-    <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 mb-8">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div>
-                <h3 class="text-2xl font-black text-slate-900 tracking-tighter">Programación de Cargas</h3>
-                <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Gestión por Fecha de Entrega</p>
-            </div>
-            
-            <div class="flex items-center gap-2 bg-slate-50 p-2 rounded-[1.5rem] border border-slate-100">
-                <input type="date" id="fechaFiltroPedidos" 
-                       class="bg-transparent border-none font-black text-slate-700 outline-none px-4 py-2 focus:ring-0"
-                       onchange="cargarPedidosDashboard()">
-                
-                <div class="h-8 w-[1px] bg-slate-200 mx-2"></div>
-                
-                <button onclick="setFechaHoy()" 
-                        class="px-4 py-2 bg-white rounded-xl shadow-sm text-[10px] font-black text-slate-600 hover:bg-slate-900 hover:text-white transition-all">
-                    HOY
-                </button>
-                <button onclick="setFechaManana()" 
-                        class="px-4 py-2 bg-white rounded-xl shadow-sm text-[10px] font-black text-slate-600 hover:bg-slate-900 hover:text-white transition-all">
-                    MAÑANA
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div id="pedidosContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        </div>
-</section>
-
-
-
-        <div id="pedidosContainer" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <p class="text-slate-400 italic">No hay pedidos recientes para mostrar.</p>
-        </div>
-    </div>
-
-    <div id="estacionesView" class="hidden">
-        <header class="flex justify-between items-start mb-10">
-            <div>
-                <h1 class="text-4xl font-black tracking-tight text-slate-900">Mis Estaciones</h1>
-                <p class="text-slate-500 font-medium mt-1">Control de inventarios (Tirillas)</p>
-            </div>
-            <button onclick="irDashboard()" class="bg-slate-800 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg hover:bg-slate-700 transition-all">
-                <i class="fas fa-arrow-left mr-2"></i> Volver al Dashboard
-            </button>
-        </header>
-        <div id="estacionesCardsContainer" class="grid grid-cols-1 gap-8">
-            </div>
-    </div> <div id="pedidosView" class="hidden">
-        <header class="flex justify-between items-start mb-10">
-            <div>
-                <h1 class="text-4xl font-black tracking-tight text-slate-900">Mis Pedidos</h1>
-                <p class="text-slate-500 font-medium mt-1">Historial y seguimiento en tiempo real</p>
-            </div>
-            <div class="flex gap-4">
-                <button onclick="irDashboard()" class="bg-slate-800 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg hover:bg-slate-700 transition-all">
-                <i class="fas fa-arrow-left mr-2"></i> Volver al Dashboard
-                </button>
-            </div>
-        </header>
-
-        <div class="flex gap-2 mb-8 overflow-x-auto pb-2 no-scrollbar">
-            <button onclick="filtrarPedidos('Todos')" class="filter-btn active bg-slate-900 text-white px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest">Todos</button>
-            <button onclick="filtrarPedidos('Pendiente')" class="filter-btn bg-white text-slate-400 border border-slate-100 px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-orange-50 hover:text-orange-500">Pendientes</button>
-            <button onclick="filtrarPedidos('Aceptado')" class="filter-btn bg-white text-slate-400 border border-slate-100 px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-blue-50 hover:text-blue-500">Aceptados</button>
-            <button onclick="filtrarPedidos('En Ruta')" class="filter-btn bg-white text-slate-400 border border-slate-100 px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-purple-50 hover:text-purple-500">En Ruta</button>
-            <button onclick="filtrarPedidos('Entregado')" class="filter-btn bg-white text-slate-400 border border-slate-100 px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-emerald-50 hover:text-emerald-500">Entregados</button>
-            <button onclick="filtrarPedidos('Cancelado')" class="filter-btn bg-white text-slate-400 border border-slate-100 px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-red-50 hover:text-red-500">Cancelados</button>
-        </div>
-
-        <div id="listaPedidosCompleta" class="grid grid-cols-1 gap-4">
-            </div>
-        </div>
-    </div>
-
-    <div id="modalTirilla" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl relative">
-            <button onclick="cerrarModalTirilla()" class="absolute top-6 right-6 text-slate-300 hover:text-slate-900"><i class="fas fa-times text-xl"></i></button>
-            <h2 id="modalEstacionNombre" class="text-2xl font-black text-slate-900 mb-1">---</h2>
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8 text-blue-600">Captura de Volumen Actual</p>
-            
-            <form id="tirillaForm" class="space-y-6">
-                <input type="hidden" id="modalEstacionId">
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black text-emerald-600 ml-2 uppercase">Extra (Litros)</label>
-                    <input type="number" id="volExtra" required class="w-full p-5 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-emerald-500 font-bold text-lg" placeholder="0.00">
-                </div>
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black text-red-600 ml-2 uppercase">Supreme (Litros)</label>
-                    <input type="number" id="volSupreme" required class="w-full p-5 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-red-500 font-bold text-lg" placeholder="0.00">
-                </div>
-                <div id="dieselInputGroup" class="space-y-2">
-                    <label class="text-[10px] font-black text-slate-800 ml-2 uppercase">Diesel (Litros)</label>
-                    <input type="number" id="volDiesel" class="w-full p-5 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-slate-800 font-bold text-lg" placeholder="0.00">
-                </div>
-                
-                <div class="pt-4">
-                    <button type="submit" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg shadow-xl hover:bg-blue-600 transition-all">
-                        Guardar Tirilla
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</main>
-
-<div id="pedidosView" class="hidden p-8 lg:p-12">
-    <header class="flex justify-between items-start mb-10">
-        <div>
-            <h1 class="text-4xl font-black tracking-tight text-slate-900">Mis Pedidos</h1>
-            <p class="text-slate-500 font-medium mt-1">Historial y seguimiento de suministros</p>
-        </div>
-        <button onclick="irDashboard()" class="bg-slate-800 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg hover:bg-slate-700 transition-all">
-            <i class="fas fa-arrow-left mr-2"></i> Volver
-        </button>
-    </header>
-
-    <div class="flex gap-2 mb-8 overflow-x-auto pb-2 no-scrollbar">
-        <button onclick="filtrarPedidos('Todos')" class="filter-btn bg-slate-900 text-white px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest">Todos</button>
-        <button onclick="filtrarPedidos('Pendiente')" class="filter-btn bg-white text-slate-400 border border-slate-100 px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-orange-50 hover:text-orange-500">Pendientes</button>
-        <button onclick="filtrarPedidos('Aceptado')" class="filter-btn bg-white text-slate-400 border border-slate-100 px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-blue-50 hover:text-blue-500">Aceptados</button>
-        <button onclick="filtrarPedidos('En Ruta')" class="filter-btn bg-white text-slate-400 border border-slate-100 px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-purple-50 hover:text-purple-500">En Ruta</button>
-        <button onclick="filtrarPedidos('Entregado')" class="filter-btn bg-white text-slate-400 border border-slate-100 px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-emerald-50 hover:text-emerald-500">Entregados</button>
-    </div>
-
-    <div class="flex gap-2 mb-8 overflow-x-auto pb-2 no-scrollbar">
-        <button onclick="filtrarPedidos('Todos')" class="filter-btn bg-slate-900 text-white px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest">Todos</button>
-        </div>
-
-    <div id="barra-programacion" class="hidden transform transition-all duration-300 translate-y-2 opacity-0 mb-6">
-        <div class="bg-slate-900 rounded-[2.5rem] p-4 flex flex-wrap items-center justify-between gap-4 shadow-2xl border border-slate-800">
-            <div class="flex items-center gap-4 ml-4">
-                <div class="h-10 w-10 bg-blue-600 rounded-xl flex items-center justify-center text-white">
-                    <i class="fas fa-layer-group"></i>
-                </div>
+        <div id="dashboardView">
+            <header class="flex justify-between items-start mb-10">
                 <div>
-                    <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest">Lote Seleccionado</p>
-                    <p class="text-white font-bold"><span id="contador-seleccion">0</span> Pedidos</p>
+                    <h1 class="text-4xl font-black tracking-tight text-slate-900">Dashboard</h1>
+                    <p class="text-slate-500 font-medium mt-1 text-blue-600" id="welcomeMsg">Hola, cargando datos...</p>
+                </div>
+                <button onclick="togglePanel()" class="bg-red-600 text-white px-8 py-4 rounded-2xl font-bold shadow-xl shadow-red-200 hover:scale-105 active:scale-95 transition-all">
+                    + Nuevo Pedido
+                </button>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                <div class="bg-white p-8 rounded-[2rem] card-shadow border border-slate-100 flex flex-col justify-between h-48 relative overflow-hidden">
+                    <div class="flex justify-between items-start z-10">
+                        <p class="text-[11px] font-black text-slate-400 uppercase tracking-[0.15em]">Pendientes</p>
+                        <div class="h-10 w-10 bg-orange-50 rounded-xl flex items-center justify-center text-orange-500"><i class="far fa-clock text-lg"></i></div>
+                    </div>
+                    <h3 id="countPendientes" class="text-5xl font-black text-slate-900 z-10">0</h3>
+                    <p class="text-[11px] font-bold text-slate-400 z-10">Por confirmar</p>
+                </div>
+                
+                <div class="bg-white p-8 rounded-[2rem] card-shadow border border-slate-100 flex flex-col justify-between h-48 relative overflow-hidden">
+                    <div class="flex justify-between items-start z-10">
+                        <p class="text-[11px] font-black text-slate-400 uppercase tracking-[0.15em]">En Ruta</p>
+                        <div class="h-10 w-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-500"><i class="fas fa-truck text-lg"></i></div>
+                    </div>
+                    <h3 id="countEnRuta" class="text-5xl font-black text-slate-900 z-10">0</h3>
+                    <p class="text-[11px] font-bold text-slate-400 z-10">Entregas en camino</p>
+                </div>
+
+                <div class="bg-white p-8 rounded-[2rem] card-shadow border border-slate-100 flex flex-col justify-between h-48 relative overflow-hidden">
+                    <div class="flex justify-between items-start z-10">
+                        <p class="text-[11px] font-black text-slate-400 uppercase tracking-[0.15em]">Entregados</p>
+                        <div class="h-10 w-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-500"><i class="fas fa-check-circle text-lg"></i></div>
+                    </div>
+                    <h3 id="countEntregados" class="text-5xl font-black text-slate-900 z-10">0</h3>
+                    <p class="text-[11px] font-bold text-slate-400 z-10">Historial completado</p>
                 </div>
             </div>
 
-            <div class="flex items-center gap-3 bg-slate-800 p-2 rounded-2xl border border-white/5">
-                <label class="text-[10px] text-slate-400 font-black uppercase px-2">Día de Entrega:</label>
-                <input type="date" id="fecha-bloque" 
-                       class="bg-transparent text-white border-none focus:ring-0 font-bold text-sm cursor-pointer outline-none">
-                <button onclick="confirmarProgramacionBloque()" 
-                        class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase transition-all">
-                    Confirmar Programa
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-black text-slate-900">Pedidos Recientes</h2>
+                <button onclick="sincronizar()" class="text-blue-600 font-bold text-sm hover:underline">
+                    <i id="syncIcon" class="fas fa-sync-alt mr-2"></i> Actualizar
                 </button>
             </div>
+            
+            <div id="pedidosContainer" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <p class="text-slate-400 italic">No hay pedidos recientes para mostrar.</p>
+            </div>
         </div>
-    </div>
-    <div id="listaPedidosCompleta" class="grid grid-cols-1 gap-4">
-        <p class="text-slate-400 italic">Cargando pedidos...</p>
-    </div>
 
-    <div id="listaPedidosCompleta" class="grid grid-cols-1 gap-4">
-        <p class="text-slate-400 italic">Cargando pedidos...</p>
-    </div>
-</div>
+        <div id="estacionesView" class="hidden">
+            <header class="flex justify-between items-start mb-10">
+                <div>
+                    <h1 class="text-4xl font-black tracking-tight text-slate-900">Mis Estaciones</h1>
+                    <p class="text-slate-500 font-medium mt-1">Control de inventarios (Tirillas)</p>
+                </div>
+                <button onclick="irDashboard()" class="bg-slate-800 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg hover:bg-slate-700 transition-all">
+                    <i class="fas fa-arrow-left mr-2"></i> Volver al Dashboard
+                </button>
+            </header>
+            <div id="estacionesCardsContainer" class="grid grid-cols-1 gap-8"></div>
+        </div>
+
+        <div id="pedidosView" class="hidden">
+            <header class="flex justify-between items-start mb-10">
+                <div>
+                    <h1 class="text-4xl font-black tracking-tight text-slate-900">Mis Pedidos</h1>
+                    <p class="text-slate-500 font-medium mt-1">Historial y seguimiento en tiempo real</p>
+                </div>
+                <button onclick="irDashboard()" class="bg-slate-800 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg hover:bg-slate-700 transition-all">
+                    <i class="fas fa-arrow-left mr-2"></i> Volver al Dashboard
+                </button>
+            </header>
+
+            <div id="barra-programacion" class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 mb-8">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div>
+                        <h3 class="text-2xl font-black text-slate-900 tracking-tighter">Programación de Cargas</h3>
+                        <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Gestión por Fecha de Entrega</p>
+                    </div>
+                    
+                    <div class="flex items-center gap-2 bg-slate-50 p-2 rounded-[1.5rem] border border-slate-100">
+                        <input type="date" id="fechaFiltroPedidos" 
+                               class="bg-transparent border-none font-black text-slate-700 outline-none px-4 py-2 focus:ring-0"
+                               onchange="cargarPedidosDashboard()">
+                        <div class="h-8 w-[1px] bg-slate-200 mx-2"></div>
+                        <button onclick="setFechaHoy()" class="px-4 py-2 bg-white rounded-xl shadow-sm text-[10px] font-black text-slate-600 hover:bg-slate-900 hover:text-white transition-all">HOY</button>
+                        <button onclick="setFechaManana()" class="px-4 py-2 bg-white rounded-xl shadow-sm text-[10px] font-black text-slate-600 hover:bg-slate-900 hover:text-white transition-all">MAÑANA</button>
+                    </div>
+                </div>
+
+                <div id="lote-acciones" class="mt-6 hidden transform transition-all duration-300">
+                    <div class="bg-slate-900 rounded-2xl p-4 flex items-center justify-between gap-4 shadow-2xl">
+                        <div class="flex items-center gap-4 ml-4">
+                            <div class="h-10 w-10 bg-blue-600 rounded-xl flex items-center justify-center text-white"><i class="fas fa-layer-group"></i></div>
+                            <div>
+                                <p class="text-[10px] text-slate-500 font-black uppercase">Seleccionados</p>
+                                <p class="text-white font-bold"><span id="contador-seleccion">0</span> Pedidos</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <input type="date" id="fecha-bloque" class="bg-slate-800 text-white border-none rounded-xl px-4 py-2 text-sm outline-none">
+                            <button onclick="confirmarProgramacionBloque()" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase">Confirmar Programa</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-2 mb-8 overflow-x-auto pb-2 no-scrollbar">
+                <button onclick="filtrarPedidos('Todos')" class="filter-btn active bg-slate-900 text-white px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest">Todos</button>
+                <button onclick="filtrarPedidos('Pendiente')" class="filter-btn bg-white text-slate-400 border border-slate-100 px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-orange-50 hover:text-orange-500">Pendientes</button>
+                <button onclick="filtrarPedidos('Aceptado')" class="filter-btn bg-white text-slate-400 border border-slate-100 px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-blue-50 hover:text-blue-500">Aceptados</button>
+                <button onclick="filtrarPedidos('En Ruta')" class="filter-btn bg-white text-slate-400 border border-slate-100 px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-purple-50 hover:text-purple-500">En Ruta</button>
+                <button onclick="filtrarPedidos('Entregado')" class="filter-btn bg-white text-slate-400 border border-slate-100 px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-emerald-50 hover:text-emerald-500">Entregados</button>
+                <button onclick="filtrarPedidos('Cancelado')" class="filter-btn bg-white text-slate-400 border border-slate-100 px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-red-50 hover:text-red-500">Cancelados</button>
+            </div>
+
+            <div id="listaPedidosCompleta" class="grid grid-cols-1 gap-4">
+                <p class="text-slate-400 italic">Cargando pedidos...</p>
+            </div>
+        </div>
+
+        <div id="modalTirilla" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl relative">
+                <button onclick="cerrarModalTirilla()" class="absolute top-6 right-6 text-slate-300 hover:text-slate-900"><i class="fas fa-times text-xl"></i></button>
+                <h2 id="modalEstacionNombre" class="text-2xl font-black text-slate-900 mb-1">---</h2>
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8 text-blue-600">Captura de Volumen Actual</p>
+                <form id="tirillaForm" class="space-y-6">
+                    <input type="hidden" id="modalEstacionId">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-emerald-600 ml-2 uppercase">Extra (Litros)</label>
+                        <input type="number" id="volExtra" required class="w-full p-5 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-emerald-500 font-bold text-lg" placeholder="0.00">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-red-600 ml-2 uppercase">Supreme (Litros)</label>
+                        <input type="number" id="volSupreme" required class="w-full p-5 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-red-500 font-bold text-lg" placeholder="0.00">
+                    </div>
+                    <div id="dieselInputGroup" class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-800 ml-2 uppercase">Diesel (Litros)</label>
+                        <input type="number" id="volDiesel" class="w-full p-5 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-slate-800 font-bold text-lg" placeholder="0.00">
+                    </div>
+                    <div class="pt-4">
+                        <button type="submit" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg shadow-xl hover:bg-blue-600 transition-all">Guardar Tirilla</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
 
     <div id="overlay" onclick="togglePanel()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity duration-300"></div>
     <div id="sidePanel" class="fixed right-0 top-0 h-full w-full max-w-lg bg-white z-50 shadow-2xl side-panel-transition translate-x-full p-10 overflow-y-auto">
@@ -307,12 +245,10 @@ body:not([data-user-role="Logística"]):not([data-user-role="Admin"]) .w-10.flex
                     <option value="">Cargando estaciones...</option>
                 </select>
             </div>
-
             <div class="space-y-2">
                 <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Dirección de Entrega</label>
                 <input id="dirAuto" type="text" readonly class="w-full p-5 bg-slate-100 rounded-2xl text-slate-500 font-medium border-none outline-none">
             </div>
-
             <div class="grid grid-cols-2 gap-4">
                 <div class="space-y-2">
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tipo</label>
@@ -327,7 +263,6 @@ body:not([data-user-role="Logística"]):not([data-user-role="Admin"]) .w-10.flex
                     <input id="fuelQty" type="number" oninput="calcTotal()" placeholder="Ej. 20000" required class="w-full p-5 bg-slate-50 rounded-2xl font-black border-none">
                 </div>
             </div>
-
             <div class="grid grid-cols-2 gap-4">
                 <div class="space-y-2">
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fecha Entrega</label>
@@ -341,15 +276,12 @@ body:not([data-user-role="Logística"]):not([data-user-role="Admin"]) .w-10.flex
                     </select>
                 </div>
             </div>
-
             <div class="p-6 bg-slate-900 rounded-[2.5rem] text-white space-y-4">
                 <div class="flex justify-between items-center">
                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Estimado</p>
                     <p id="finalTotal" class="text-3xl font-black text-emerald-400">$0.00</p>
                 </div>
-                <button type="submit" id="btnConfirm" class="w-full bg-red-600 text-white p-5 rounded-2xl font-black text-lg shadow-xl hover:bg-red-700 active:scale-95 transition-all">
-                    Confirmar Orden
-                </button>
+                <button type="submit" id="btnConfirm" class="w-full bg-red-600 text-white p-5 rounded-2xl font-black text-lg shadow-xl hover:bg-red-700 active:scale-95 transition-all">Confirmar Orden</button>
             </div>
         </form>
     </div>
