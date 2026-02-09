@@ -1281,20 +1281,24 @@ async function procesarCancelacion() {
 let modoSeleccionActivo = false;
 
 function toggleModoSeleccion() {
+    // Alternamos el estado global
     modoSeleccionActivo = !modoSeleccionActivo;
     const btn = document.getElementById('btnModoSeleccion');
     
     if (modoSeleccionActivo) {
         document.body.classList.add('modo-seleccion-activo');
-        btn.innerHTML = 'Cancelar Selección';
+        btn.innerHTML = 'CANCELAR SELECCIÓN';
         btn.classList.replace('bg-blue-600', 'bg-slate-500');
     } else {
         document.body.classList.remove('modo-seleccion-activo');
-        btn.innerHTML = 'Seleccionar Pedidos';
+        btn.innerHTML = 'SELECCIONAR PEDIDOS';
         btn.classList.replace('bg-slate-500', 'bg-blue-600');
         
-        // Limpiar checkboxes
-        document.querySelectorAll('.pedido-checkbox').forEach(cb => cb.checked = false);
+        // Limpiamos los checks físicamente
+        const checks = document.querySelectorAll('.pedido-checkbox');
+        checks.forEach(c => c.checked = false);
+        
+        // Ocultamos el panel negro si existe
         actualizarSeleccionados(); 
     }
 }
