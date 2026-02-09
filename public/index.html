@@ -303,49 +303,48 @@ body:not([data-user-role="Logistica_Policon"]):not([data-user-role="Admin"]) .ad
         document.getElementById('userStation').innerText = userData.estaciones;
         document.getElementById('userInitials').innerText = userData.nombre.substring(0, 2);
 
+        // Llamamos a la nueva función maestra de configuración
         configurarInterfazPorRol(userData.rol);
 
         await cargarEstaciones();
-        await cargarPedidosDashboard(); // <--- Carga los pedidos al iniciar
+        await cargarPedidosDashboard();
 
         // ACTUALIZACIÓN AUTOMÁTICA CADA 30 SEGUNDOS
         setInterval(sincronizar, 30000);
     }
 
-function ajustarTextosPorRol(rol) {
-    // Detectamos si es Admin o Logística
-    const esAdmin = (rol === 'Logistica_Policon' || rol === 'Admin');
-    
-    // 1. Cambiar Título y Subtítulo
-    const titulo = document.getElementById('txtTituloPedidos');
-    const subtitulo = document.getElementById('txtSubtituloPedidos');
-    
-    if (titulo && subtitulo) {
-        titulo.innerText = esAdmin ? "Pedidos" : "Mis Pedidos";
-        subtitulo.innerText = esAdmin ? "Gestión Logística Central" : "Historial y seguimiento en tiempo real";
-    }
-
-    // 2. Mostrar/Ocultar herramientas de Admin (Botón selección y Programación header)
-    // Para esto, asegúrate de que los elementos tengan la clase 'admin-only'
-    const herramientasAdmin = document.querySelectorAll('.admin-only');
-    herramientasAdmin.forEach(el => {
-        el.style.setProperty('display', esAdmin ? 'flex' : 'none', esAdmin ? '' : 'important');
-    });
-}
-
     function configurarInterfazPorRol(rol) {
+        // 1. Guardamos el rol en el body para el CSS
         document.body.setAttribute('data-user-role', rol);
+        const esAdmin = (rol === 'Logistica_Policon' || rol === 'Admin');
+
+        // 2. AJUSTE DE TEXTOS (Tu boceto: Gerente ve "Mis Pedidos", Admin ve "Pedidos")
+        const titulo = document.getElementById('txtTituloPedidos');
+        const subtitulo = document.getElementById('txtSubtituloPedidos');
         
-        // Mostrar/Ocultar barra de programación solo para Logística
-        const barraLogistica = document.getElementById('barra-programacion');
-        if (barraLogistica) {
-            barraLogistica.style.display = (rol === 'Logistica_Policon' || rol === 'Admin') ? 'block' : 'none';
+        if (titulo && subtitulo) {
+            titulo.innerText = esAdmin ? "Pedidos" : "Mis Pedidos";
+            subtitulo.innerText = esAdmin ? "Gestión Logística Central" : "Historial y seguimiento en tiempo real";
+            // Aseguramos que no tenga cursiva (Boceto exacto)
+            titulo.style.fontStyle = "normal";
         }
 
+        // 3. CONTROL DE HERRAMIENTAS ADMIN (Programación y Botón Selección)
+        // Buscamos todo lo que marcamos como 'admin-only'
+        const herramientasAdmin = document.querySelectorAll('.admin-only');
+        herramientasAdmin.forEach(el => {
+            // Si es gerente, lo eliminamos o lo ocultamos agresivamente
+            if (!esAdmin) {
+                el.style.setProperty('display', 'none', 'important');
+            } else {
+                el.style.display = 'flex';
+            }
+        });
+
+        // 4. LÓGICA DE NAVEGACIÓN (Original)
         const botones = document.querySelectorAll('nav button');
         botones.forEach(btn => {
             const texto = btn.innerText.toLowerCase();
-            // Lógica para Fletera
             if (rol === 'Fletera') {
                 if (texto.includes('estaciones') || texto.includes('créditos')) {
                     btn.style.setProperty('display', 'none', 'important');
@@ -372,25 +371,23 @@ function ajustarTextosPorRol(rol) {
         }
     }
 
-
     async function sincronizar() {
-    const icon = document.getElementById('syncIcon');
-    if (icon) icon.classList.add('spin-anim'); 
-    
-    try {
-        await cargarEstaciones();
-        await cargarPedidosDashboard();
+        const icon = document.getElementById('syncIcon');
+        if (icon) icon.classList.add('spin-anim'); 
         
-        // Solo ejecuta loadConfig si existe la función y no rompe el flujo
-        if (typeof loadConfig === "function") {
-            try { loadConfig(); } catch(e) { console.warn("Aviso: loadConfig saltado"); }
+        try {
+            await cargarEstaciones();
+            await cargarPedidosDashboard();
+            
+            if (typeof loadConfig === "function") {
+                try { loadConfig(); } catch(e) { console.warn("Aviso: loadConfig saltado"); }
+            }
+        } catch (error) {
+            console.error("Error en sincronización:", error);
+        } finally {
+            if (icon) setTimeout(() => icon.classList.remove('spin-anim'), 1000);
         }
-    } catch (error) {
-        console.error("Error en sincronización:", error);
-    } finally {
-        if (icon) setTimeout(() => icon.classList.remove('spin-anim'), 1000);
     }
-}
 
 
 
