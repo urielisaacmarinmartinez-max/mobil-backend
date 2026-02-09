@@ -169,22 +169,40 @@ body:not([data-user-role="Logistica_Policon"]):not([data-user-role="Admin"]) .ad
 
         <div id="pedidosView" class="hidden">
     <header class="flex justify-between items-center mb-10">
-        <div>
-            <h1 id="txtTituloPedidos" class="text-4xl font-black tracking-tight text-slate-900">Pedidos</h1>
-            <p id="txtSubtituloPedidos" class="text-slate-500 font-medium mt-1">Historial y seguimiento en tiempo real</p>
+    <div>
+        <h1 id="txtTituloPedidos" class="text-4xl font-black tracking-tight text-slate-900">Pedidos</h1>
+        <p id="txtSubtituloPedidos" class="text-slate-500 font-medium mt-1">Gestión Logística Central</p>
+    </div>
+    
+    <div id="barra-programacion" class="admin-only flex flex-col items-end gap-2">
+        <div class="mr-4">
+            <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                Programación <span class="text-blue-600">por Día</span>
+            </span>
         </div>
-        
-        <div id="area-programacion-header" class="bg-white px-6 py-4 rounded-[2rem] shadow-sm border border-slate-100 flex items-center gap-4 admin-only">
-            <div class="text-right">
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter leading-none">Programación<br>por Día</p>
-            </div>
-            <div class="h-8 w-[1px] bg-slate-100 mx-1"></div>
-            <div class="flex items-center gap-2">
-                <input type="date" id="fechaFiltroPedidos" class="bg-transparent border-none font-black text-slate-700 outline-none text-sm" onchange="cargarPedidosDashboard()">
-                <button onclick="setFechaHoy()" class="px-3 py-1 bg-slate-50 rounded-lg text-[9px] font-bold text-slate-600 hover:bg-slate-900 hover:text-white transition-all">HOY</button>
+
+        <div class="bg-white px-4 py-2 rounded-[2rem] shadow-sm border border-slate-100 flex items-center gap-3">
+            <div class="flex items-center gap-2 bg-slate-50/80 p-1.5 rounded-xl">
+                <input type="date" id="fechaFiltroPedidos" 
+                       class="bg-transparent border-none font-black text-slate-700 outline-none text-xs cursor-pointer px-2" 
+                       onchange="cargarPedidosDashboard()">
+                
+                <div class="h-6 w-[1px] bg-slate-200 mx-1"></div>
+                
+                <div class="flex gap-1">
+                    <button onclick="setFechaHoy()" 
+                            class="px-3 py-1.5 bg-white rounded-lg shadow-sm text-[9px] font-black text-slate-600 hover:bg-slate-900 hover:text-white transition-all uppercase">
+                        Hoy
+                    </button>
+                    <button onclick="setFechaManana()" 
+                            class="px-3 py-1.5 bg-white rounded-lg shadow-sm text-[9px] font-black text-slate-600 hover:bg-slate-900 hover:text-white transition-all uppercase">
+                        Mañana
+                    </button>
+                </div>
             </div>
         </div>
-    </header>
+    </div>
+</header>
 
     <div class="mb-8 admin-only">
         <button id="btnModoSeleccion" onclick="toggleModoSeleccion()" 
