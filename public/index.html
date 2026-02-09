@@ -10,16 +10,16 @@
     <style>
 
         /* Esconder checkboxes y barra si NO es logística o admin */
-body:not([data-user-role="Logística"]):not([data-user-role="Admin"]) .pedido-checkbox {
+body:not([data-user-role="Logistica_Policon"]):not([data-user-role="Admin"]) .pedido-checkbox {
     display: none !important;
 }
 
-body:not([data-user-role="Logística"]):not([data-user-role="Admin"]) #barra-programacion {
+body:not([data-user-role="Logistica_Policon"]):not([data-user-role="Admin"]) #barra-programacion {
     display: none !important;
 }
 
 /* Estilo para que la lista se vea alineada aunque no haya checkbox */
-body:not([data-user-role="Logística"]):not([data-user-role="Admin"]) .w-10.flex.justify-center {
+body:not([data-user-role="Logistica_Policon"]):not([data-user-role="Admin"]) .w-10.flex.justify-center {
     width: 20px; /* Reducimos el espacio vacío para el gerente */
 }
 
