@@ -899,27 +899,37 @@ function dibujarEstaciones() {
 
 // Funciones de apoyo para el tiempo
 // --- CORRECCIÓN DE FUNCIONES DE APOYO ---
-function setFechaHoy() {
-    const hoy = new Date().toISOString().split('T')[0];
+function setFechaHoy(event) {
+    if (event) event.stopPropagation(); // Evita que el clic suba al contenedor
     const input = document.getElementById('fechaFiltroPedidos');
-    if (input) {
-        input.value = hoy;
-        // Cambiamos cargarPedidosDashboard por renderizarPedidosLista para que actualice la tabla
-        renderizarPedidosLista(); 
-    }
+    const hoy = new Date().toISOString().split('T')[0];
+    
+    input.value = hoy;
+    input.blur(); // <--- Esto cierra el calendario si se intentó abrir
+    cargarPedidosDashboard();
 }
 
-function setFechaManana() {
+function setFechaManana(event) {
+    if (event) event.stopPropagation();
+    const input = document.getElementById('fechaFiltroPedidos');
     const manana = new Date();
     manana.setDate(manana.getDate() + 1);
     const fechaStr = manana.toISOString().split('T')[0];
-    const input = document.getElementById('fechaFiltroPedidos');
-    if (input) {
-        input.value = fechaStr;
-        // Cambiamos cargarPedidosDashboard por renderizarPedidosLista
-        renderizarPedidosLista();
-    }
+    
+    input.value = fechaStr;
+    input.blur(); // <--- Esto fuerza el cierre
+    cargarPedidosDashboard();
 }
+
+// CERRAR CALENDARIO AL HACER CLIC FUERA
+document.addEventListener('click', function(event) {
+    const input = document.getElementById('fechaFiltroPedidos');
+    const esClickDentro = input.contains(event.target);
+    
+    if (!esClickDentro) {
+        input.blur(); // Si haces clic en cualquier otro lado, el input pierde el foco
+    }
+});
 
 async function renderizarPedidosLista(filtro = 'Todos') {
     const container = document.getElementById('listaPedidosCompleta');
