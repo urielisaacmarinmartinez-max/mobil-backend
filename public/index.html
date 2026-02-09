@@ -940,18 +940,34 @@ async function renderizarPedidosLista(filtro = 'Todos') {
 }
 
 // --- LAS FUNCIONES DE SELECCIÓN Y PICKER SE MANTIENEN IGUAL PERO ASEGURAMOS QUE RECONOZCAN EL PANEL ---
+/**
+ * ÚNICA FUNCIÓN DE CONTROL: Maneja la barra negra inferior
+ */
 function actualizarSeleccionados() {
+    // 1. Buscamos los elementos
     const checkboxes = document.querySelectorAll('.pedido-checkbox:checked');
     const panel = document.getElementById('panel-programacion-flotante');
     const badge = document.getElementById('contador-masivo-badge');
     
-    if (!panel || !badge) return;
+    // Verificación de seguridad en consola
+    if (!panel) {
+        console.error("ERROR: No se encontró el ID 'panel-programacion-flotante' en el HTML");
+        return;
+    }
 
-    if (checkboxes.length > 0) {
-        badge.innerText = checkboxes.length;
+    const total = checkboxes.length;
+
+    if (total > 0) {
+        // Actualizamos número
+        if (badge) badge.innerText = total;
+        
+        // FORZAMOS VISIBILIDAD: Quitamos hidden y usamos flex
         panel.classList.remove('hidden');
-        panel.style.display = 'flex'; // Forzamos visibilidad
+        panel.style.display = 'flex'; 
+        
+        console.log("Panel activado: " + total + " pedidos seleccionados.");
     } else {
+        // Ocultamos todo
         panel.classList.add('hidden');
         panel.style.display = 'none';
     }
@@ -1305,13 +1321,19 @@ window.onload = initDashboard;
     </button>
 </nav>
 
-<div id="panel-programacion-flotante" class="hidden fixed bottom-8 left-1/2 -translate-x-1/2 z-40 bg-slate-900 text-white px-6 py-4 rounded-3xl shadow-2xl flex items-center gap-6 animate-in fade-in slide-in-from-bottom-10">
+<div id="panel-programacion-flotante" 
+     style="display: none !important; position: fixed !important; bottom: 30px !important; left: 50% !important; transform: translateX(-50%) !important; z-index: 9999 !important;" 
+     class="bg-slate-900 text-white px-6 py-4 rounded-3xl shadow-2xl flex items-center gap-6">
+    
     <div class="flex flex-col">
         <span class="text-[9px] font-black uppercase text-slate-400">Seleccionados</span>
-        <span id="contador-masivo-badge" class="font-black text-xl">0</span>
+        <span id="contador-masivo-badge" class="font-black text-xl text-white">0</span>
     </div>
-    <div class="h-8 w-[1px] bg-slate-700"></div>
-    <button onclick="abrirModalAsignacion()" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all">
+    
+    <div style="height: 32px; width: 1px; background-color: #334155;"></div>
+    
+    <button onclick="abrirModalAsignacion()" 
+            class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all shadow-lg">
         Asignar Fecha
     </button>
 </div>
