@@ -168,37 +168,38 @@ body:not([data-user-role="Logistica_Policon"]):not([data-user-role="Admin"]) .ad
         </div>
 
         <div id="pedidosView" class="hidden">
-    <header class="flex justify-between items-center mb-10">
+    <header class="flex justify-between items-start mb-10">
     <div>
-        <h1 id="txtTituloPedidos" class="text-4xl font-black tracking-tight text-slate-900">Pedidos</h1>
+        <h1 id="txtTituloPedidos" class="text-4xl font-black tracking-tight text-slate-900" style="font-style: normal !important;">Pedidos</h1>
         <p id="txtSubtituloPedidos" class="text-slate-500 font-medium mt-1">Gestión Logística Central</p>
     </div>
     
-    <div id="barra-programacion" class="admin-only flex flex-col items-end gap-2">
-        <div class="mr-4">
-            <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest">
-                Programación <span class="text-blue-600">por Día</span>
+    <div class="admin-only flex flex-col items-end">
+        <div class="mb-2 mr-6">
+            <span class="text-[11px] font-black tracking-[0.15em] text-slate-400 uppercase">
+                PROGRAMACIÓN <span class="text-blue-600">POR DÍA</span>
             </span>
         </div>
 
-        <div class="bg-white px-4 py-2 rounded-[2rem] shadow-sm border border-slate-100 flex items-center gap-3">
-            <div class="flex items-center gap-2 bg-slate-50/80 p-1.5 rounded-xl">
+        <div class="bg-white border border-slate-100 shadow-sm rounded-full px-6 py-2 flex items-center gap-4">
+            <div class="flex items-center gap-3">
                 <input type="date" id="fechaFiltroPedidos" 
-                       class="bg-transparent border-none font-black text-slate-700 outline-none text-xs cursor-pointer px-2" 
+                       class="bg-transparent border-none font-black text-slate-700 outline-none text-sm w-32 cursor-pointer" 
                        onchange="cargarPedidosDashboard()">
-                
-                <div class="h-6 w-[1px] bg-slate-200 mx-1"></div>
-                
-                <div class="flex gap-1">
-                    <button onclick="setFechaHoy()" 
-                            class="px-3 py-1.5 bg-white rounded-lg shadow-sm text-[9px] font-black text-slate-600 hover:bg-slate-900 hover:text-white transition-all uppercase">
-                        Hoy
-                    </button>
-                    <button onclick="setFechaManana()" 
-                            class="px-3 py-1.5 bg-white rounded-lg shadow-sm text-[9px] font-black text-slate-600 hover:bg-slate-900 hover:text-white transition-all uppercase">
-                        Mañana
-                    </button>
-                </div>
+                <i class="fas fa-calendar-alt text-slate-900 text-sm"></i>
+            </div>
+
+            <div class="h-6 w-[1px] bg-slate-200"></div>
+
+            <div class="flex gap-2">
+                <button onclick="setFechaHoy()" 
+                        class="px-4 py-1.5 bg-white border border-slate-50 rounded-lg shadow-sm text-[9px] font-black text-slate-500 hover:bg-slate-900 hover:text-white transition-all uppercase">
+                    HOY
+                </button>
+                <button onclick="setFechaManana()" 
+                        class="px-4 py-1.5 bg-white border border-slate-50 rounded-lg shadow-sm text-[9px] font-black text-slate-500 hover:bg-slate-900 hover:text-white transition-all uppercase">
+                    MAÑANA
+                </button>
             </div>
         </div>
     </div>
