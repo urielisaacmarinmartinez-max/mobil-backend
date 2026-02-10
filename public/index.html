@@ -1001,20 +1001,9 @@ async function renderizarPedidosLista(filtro = 'Todos') {
     container.innerHTML = '<div class="p-10 text-center text-slate-400 animate-pulse font-black uppercase text-xs tracking-widest">Generando Lista Logística...</div>';
 
     try {
+        // CAMBIO: Enviamos 'fechaFiltro' para que el servidor busque en la Columna C (Bloque)
         const url = `/api/obtener-pedidos?estaciones=${encodeURIComponent(userData.estaciones)}&rol=${userData.rol}&fechaFiltro=${fechaSeleccionada}`;
         const response = await fetch(url);
-        
-        // Manejo específico para el Error 429 (Cuota de Google Sheets)
-        if (response.status === 429) {
-            container.innerHTML = `
-                <div class="p-10 text-center">
-                    <i class="fas fa-clock text-orange-400 text-2xl mb-3"></i>
-                    <p class="text-slate-500 font-bold">Límite de Google alcanzado.</p>
-                    <p class="text-slate-400 text-xs uppercase tracking-widest">Espera 60 segundos para reintentar.</p>
-                </div>`;
-            return;
-        }
-
         const data = await response.json();
         let pedidos = data.pedidos || [];
 
@@ -1024,7 +1013,7 @@ async function renderizarPedidosLista(filtro = 'Todos') {
 
         if (pedidos.length === 0) {
             container.innerHTML = `<p class="p-10 text-center font-bold text-slate-400">No hay pedidos programados para el día seleccionado.</p>`;
-            if (typeof actualizarSeleccionados === 'function') actualizarSeleccionados(); 
+            actualizarSeleccionados(); 
             return;
         }
 
@@ -1032,11 +1021,13 @@ async function renderizarPedidosLista(filtro = 'Todos') {
         container.innerHTML = pedidos.map(p => {
             const estatusNormalizado = p.estatus ? p.estatus.trim().toLowerCase() : '';
             
+            // Ajuste de colores: Aceptado (Programado) ahora es azul
             const color = estatusNormalizado === 'pendiente' ? 'orange' : 
                           estatusNormalizado === 'en ruta' ? 'purple' : 
                           estatusNormalizado === 'entregado' ? 'emerald' : 
                           estatusNormalizado === 'aceptado' ? 'blue' : 'slate';
 
+            // Permitimos selección si es Pendiente o si ya fue Aceptado (para reprogramar si es necesario)
             const permiteSeleccion = estatusNormalizado === 'pendiente' || estatusNormalizado === 'aceptado';
 
             return `
@@ -1078,14 +1069,17 @@ async function renderizarPedidosLista(filtro = 'Todos') {
         }).join('');
         
         // 3. SINCRONIZAR VISIBILIDAD INMEDIATA
-        const modoActivo = typeof modoSeleccionActivo !== 'undefined' ? modoSeleccionActivo : false;
-        document.body.classList.toggle('modo-seleccion-activo', modoActivo);
+        if (typeof modoSeleccionActivo !== 'undefined' && modoSeleccionActivo) {
+            document.body.classList.add('modo-seleccion-activo');
+        } else {
+            document.body.classList.remove('modo-seleccion-activo');
+        }
 
-        if (typeof actualizarSeleccionados === 'function') actualizarSeleccionados();
+        actualizarSeleccionados();
 
     } catch (e) {
         console.error("Error:", e);
-        container.innerHTML = '<div class="p-10 text-center"><i class="fas fa-exclamation-triangle text-red-400 mb-2"></i><p class="text-red-500 font-bold">Error de conexión al servidor.</p></div>';
+        container.innerHTML = '<p class="text-red-500 text-center font-bold p-10">Error de conexión al servidor.</p>';
     }
 }
 
