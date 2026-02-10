@@ -299,9 +299,16 @@ app.post('/api/reubicar-pedido', async (req, res) => {
 });
 
 // --- ENDPOINT PARA PROGRAMACIÓN POR BLOQUES (LOGÍSTICA) ---
+// --- ACTUALIZADO: ENDPOINT PARA PROGRAMACIÓN POR BLOQUES (LOGÍSTICA) ---
 app.post('/api/confirmar-bloque', async (req, res) => {
-    const { idsPedidos, bloqueProgramacion } = req.body;
+    // Aceptamos tanto idsPedidos como pedidos para evitar errores de integración
+    const idsPedidos = req.body.idsPedidos || req.body.pedidos;
+    const bloqueProgramacion = req.body.bloqueProgramacion || req.body.fechaProgramada;
     
+    if (!idsPedidos || !bloqueProgramacion) {
+        return res.status(400).json({ success: false, message: "Faltan datos (IDs o Fecha)" });
+    }
+
     try {
         await doc.loadInfo();
         const sheet = doc.sheetsByTitle['Pedidos'];
@@ -309,12 +316,17 @@ app.post('/api/confirmar-bloque', async (req, res) => {
 
         let procesados = 0;
 
+        // Iteramos sobre los IDs recibidos
         for (let id of idsPedidos) {
-            const row = rows.find(r => r.get('FOLIO') === id);
+            const row = rows.find(r => r.get('FOLIO').toString() === id.toString());
             if (row) {
-                // Actualizamos las columnas según tu nueva estructura
+                // Actualizamos la Columna C (BLOQUE DE PROGRAMACIÓN)
                 row.set('BLOQUE DE PROGRAMACIÓN', bloqueProgramacion);
-                row.set('ESTATUS', 'Aceptado'); // Al programarlo, pasa a ser un pedido "Aceptado"
+                
+                // OPCIONAL: Si quieres que el estatus cambie, deja esta línea. 
+                // Si quieres que se quede en 'Pendiente', coméntala.
+                row.set('ESTATUS', 'Aceptado'); 
+                
                 await row.save();
                 procesados++;
             }
