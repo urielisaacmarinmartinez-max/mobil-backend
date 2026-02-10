@@ -939,43 +939,38 @@ function dibujarEstaciones() {
 // Funciones de apoyo para el tiempo
 // --- CORRECCIÓN DE FUNCIONES DE APOYO ---
 function setFechaHoy(e) {
-    // 1. Evitamos que el clic se propague al input de fecha
-    e.preventDefault();
-    e.stopPropagation();
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
     
     const input = document.getElementById('fechaFiltroPedidos');
-    const hoy = new Date();
-    // Ajuste de zona horaria para evitar desfases de un día
-    const offset = hoy.getTimezoneOffset();
-    const fechaAjustada = new Date(hoy.getTime() - (offset * 60 * 1000));
-    const fechaStr = fechaAjustada.toISOString().split('T')[0];
+    // Usamos esta forma simple para evitar desfases de zona horaria
+    const hoy = new Date().toLocaleDateString('sv-SE'); // Retorna YYYY-MM-DD
     
-    input.value = fechaStr;
-    
-    // 2. Quitamos el foco para que el navegador no intente abrir el calendario
+    input.value = hoy;
     input.blur();
     
-    // 3. Ejecutamos tu función de carga
-    cargarPedidosDashboard();
+    // CAMBIO CLAVE: Llamamos a la función que tiene el nuevo filtro
+    renderizarPedidosLista(); 
 }
 
 function setFechaManana(e) {
-    e.preventDefault();
-    e.stopPropagation();
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
     
     const input = document.getElementById('fechaFiltroPedidos');
-    const hoy = new Date();
-    const manana = new Date(hoy);
+    const manana = new Date();
     manana.setDate(manana.getDate() + 1);
+    const mananaStr = manana.toLocaleDateString('sv-SE'); // Retorna YYYY-MM-DD
     
-    const offset = manana.getTimezoneOffset();
-    const fechaAjustada = new Date(manana.getTime() - (offset * 60 * 1000));
-    const fechaStr = fechaAjustada.toISOString().split('T')[0];
-    
-    input.value = fechaStr;
+    input.value = mananaStr;
     input.blur();
     
-    cargarPedidosDashboard();
+    // CAMBIO CLAVE: Llamamos a la función que tiene el nuevo filtro
+    renderizarPedidosLista();
 }
 
 // CERRAR CALENDARIO AL HACER CLIC FUERA

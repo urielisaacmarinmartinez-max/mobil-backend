@@ -211,39 +211,71 @@ app.post('/api/actualizar-tirilla', async (req, res) => {
 });
 
 // 6. OBTENER DETALLE
-app.get('/api/obtener-pedido-detallado', async (req, res) => {
-    const { id } = req.query; 
+// Busca el app.get('/api/obtener-pedidos', ...) y actualízalo así:
+app.get('/api/obtener-pedidos', async (req, res) => {
+    // Recibimos 'fechaFiltro' desde el frontend
+    const { estaciones, rol, fechaFiltro } = req.query; 
     try {
         await doc.loadInfo();
-        const sheet = doc.sheetsByTitle['Pedidos'];
-        const rows = await sheet.getRows();
-        const p = rows.find(r => r.get('FOLIO') === id);
+        const sheetPedidos = doc.sheetsByTitle['Pedidos'];
+        const sheetEst = doc.sheetsByTitle['Estaciones'];
         
-        if (p) {
-            res.json({
-                id: p.get('FOLIO'),
-                fecha_registro: p.get('FECHA DE REGISTRO'),
-                bloque: p.get('BLOQUE DE PROGRAMACIÓN'), // Nueva columna
-                estacion: p.get('ESTACIÓN'),
-                estatus: p.get('ESTATUS'),
-                producto: p.get('TIPO DE PRODUCTO'),
-                litros: p.get('LITROS'),
-                prioridad: p.get('PRIORIDAD'),
-                orden: p.get('ORDEN'),
-                fletera: p.get('FLETERA'),
-                unidad: p.get('UNIDAD'),
-                placas: `${p.get('PLACA 1') || ''} / ${p.get('PLACA 2') || ''}`,
-                operador: p.get('OPERADOR'),
-                eta: p.get('ETA'),
-                cantidad_exacta: p.get('CANTIDAD EXACTA'),
-                confirmacion: p.get('CONFIRMACIÓN O REUBICACIÓN')
-            });
-        } else {
-            res.status(404).json({ error: "Pedido no encontrado" });
+        const rowsPedidos = await sheetPedidos.getRows();
+        const rowsEst = await sheetEst.getRows();
+
+        let filasFiltradas = rowsPedidos;
+
+        // --- FILTRO POR FECHA DE BLOQUE ---
+        // En server.js, actualiza esta parte del filtro:
+if (fechaFiltro) {
+    filasFiltradas = filasFiltradas.filter(row => {
+        // Obtenemos el valor de la Columna C (Bloque de Programación)
+        const bloque = row.get('BLOQUE DE PROGRAMACIÓN');
+        
+        // Si la celda está vacía, la ignoramos
+        if (!bloque) return false;
+
+        // Limpiamos ambos valores para que la comparación sea exacta (texto simple)
+        return bloque.toString().trim() === fechaFiltro.toString().trim();
+    });
+}
+
+        // --- FILTRO POR ROL/ESTACIONES (Tu lógica existente) ---
+        if (rol === 'Fletera') {
+            filasFiltradas = filasFiltradas.filter(row => row.get('FLETERA') === estaciones);
+        } else if (estaciones !== 'TODAS') {
+            const mapaNombres = {};
+            rowsEst.forEach(r => { mapaNombres[r.get('ID_Estacion')] = r.get('Nombre'); });
+            const idsPermitidos = estaciones ? estaciones.split(',').map(e => e.trim()) : [];
+            const nombresPermitidos = idsPermitidos.map(id => mapaNombres[id]).filter(n => n);
+
+            filasFiltradas = filasFiltradas.filter(row => nombresPermitidos.includes(row.get('ESTACIÓN')));
         }
+
+        // Mapeamos los datos para enviar al frontend
+        const pedidos = filasFiltradas.reverse().map(row => ({
+            id: row.get('FOLIO'),
+            fecha: row.get('FECHA DE REGISTRO'),
+            bloque: row.get('BLOQUE DE PROGRAMACIÓN'), // Importante para el contador
+            estacion: row.get('ESTACIÓN'),
+            producto: row.get('TIPO DE PRODUCTO'),
+            litros: row.get('LITROS'),
+            total: row.get('TOTAL'),
+            estatus: row.get('ESTATUS') || 'Pendiente'
+        }));
+
+        // Estadísticas dinámicas según el filtro actual
+        const estadisticas = {
+            pendientes: filasFiltradas.filter(r => r.get('ESTATUS') === 'Pendiente').length,
+            enRuta: filasFiltradas.filter(r => r.get('ESTATUS') === 'En Ruta').length,
+            entregados: filasFiltradas.filter(r => r.get('ESTATUS') === 'Entregado').length,
+            programados: filasFiltradas.filter(r => r.get('ESTATUS') === 'Aceptado').length
+        };
+
+        res.json({ pedidos, estadisticas });
     } catch (error) {
-        console.error("Error al obtener detalle:", error);
-        res.status(500).json({ error: "Error interno" });
+        console.error("Error al obtener pedidos:", error);
+        res.status(500).json({ pedidos: [], estadisticas: { pendientes: 0, enRuta: 0, entregados: 0 } });
     }
 });
 
