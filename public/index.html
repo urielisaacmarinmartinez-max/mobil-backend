@@ -41,7 +41,7 @@
 
         /* --- 3. IMPLEMENTACIÓN SELECTOR DE FECHA (SIN ICONO) --- */
         
-        /* Quita el icono de calendario nativo (el que marcaste con círculo verde) */
+        /* Quita el icono de calendario nativo */
         #fechaFiltroPedidos::-webkit-calendar-picker-indicator {
             background: transparent;
             bottom: 0;
@@ -88,6 +88,45 @@
         /* Scroll personalizado para el modal estilo iPhone */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* --- 5. NUEVO: PICKER ESTILO IPHONE (RESALTADO) --- */
+        
+        #date-picker-list {
+            scroll-behavior: smooth;
+            padding-top: 5rem; 
+            padding-bottom: 5rem;
+        }
+
+        /* Items apagados por defecto */
+        .date-item {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0.2;
+            transform: scale(0.85);
+            filter: blur(0.5px);
+        }
+
+        /* Item en el centro (Activo) */
+        .date-item.active-date {
+            opacity: 1 !important;
+            transform: scale(1.2) !important;
+            color: #2563eb !important; /* Azul Policon */
+            font-weight: 900 !important;
+            filter: blur(0px);
+        }
+
+        /* Las dos líneas guía del visor */
+        .picker-visor {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 85%;
+            height: 50px;
+            border-top: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
+            pointer-events: none;
+            z-index: 5;
+        }
     </style>
 </head>
 <body class="h-screen overflow-hidden flex text-slate-800">
@@ -1080,16 +1119,59 @@ function abrirModalAsignacion() {
         let value = fecha.toISOString().split('T')[0];
 
         const item = document.createElement('div');
-        item.className = "snap-center h-10 flex items-center justify-center shrink-0 font-black text-sm uppercase cursor-pointer text-slate-400 hover:text-blue-600 transition-all";
+        // Usamos 'date-item' para que el CSS que añadimos antes funcione
+        item.className = "date-item snap-center h-12 flex items-center justify-center shrink-0 font-black text-sm uppercase cursor-pointer text-slate-400 transition-all";
         item.innerHTML = label;
         item.dataset.value = value;
         
-        // Al hacer click o al estar en el centro, se selecciona
-        item.onclick = () => seleccionarFechaDelPicker(item);
+        // Al hacer clic, scroleamos hacia ese elemento
+        item.onclick = () => {
+            item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        };
         list.appendChild(item);
-        
-        if(i === 1) seleccionarFechaDelPicker(item); // Mañana por defecto
     }
+
+    // --- NUEVO: DETECTOR DE SCROLL TIPO IPHONE ---
+    list.onscroll = () => {
+        const listRect = list.getBoundingClientRect();
+        const center = listRect.top + (listRect.height / 2);
+        
+        let itemMasCercano = null;
+        let distanciaMinima = Infinity;
+
+        // Buscamos cuál fecha está más cerca del centro visual
+        const items = list.querySelectorAll('.date-item');
+        items.forEach(item => {
+            const itemRect = item.getBoundingClientRect();
+            const itemCenter = itemRect.top + (itemRect.height / 2);
+            const distancia = Math.abs(center - itemCenter);
+
+            if (distancia < distanciaMinima) {
+                distanciaMinima = distancia;
+                itemMasCercano = item;
+            }
+            // Limpiamos el resaltado de todos mientras scrolleamos
+            item.classList.remove('active-date');
+        });
+
+        // Resaltamos el que quedó en el centro y actualizamos la variable global
+        if (itemMasCercano) {
+            itemMasCercano.classList.add('active-date');
+            fechaSeleccionadaParaAsignar = itemMasCercano.dataset.value;
+        }
+    };
+
+    // Selección inicial: Mañana (índice 1) por defecto con un pequeño delay 
+    // para que el navegador procese el renderizado antes de scrolear
+    setTimeout(() => {
+        const mananaItem = list.children[1];
+        if(mananaItem) {
+            mananaItem.scrollIntoView({ behavior: 'auto', block: 'center' });
+            // Forzamos el resaltado inicial
+            mananaItem.classList.add('active-date');
+            fechaSeleccionadaParaAsignar = mananaItem.dataset.value;
+        }
+    }, 100);
 }
 
 function seleccionarFechaDelPicker(elemento) {
