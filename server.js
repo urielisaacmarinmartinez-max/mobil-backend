@@ -200,18 +200,18 @@ app.get('/api/obtener-pedidos', async (req, res) => {
         }
 
         // 2. Filtro por Rol y Estación (USANDO LAS LLAVES EN MINÚSCULAS DE TU CAPTURA)
-        // Dentro de app.get('/api/obtener-pedidos')
-if (rol !== 'Admin' && rol !== 'Logistica_Policon' && estaciones && estaciones !== 'TODAS') {
-    // Convertimos "ALDIA DORADA, ALDIA XALAPA" en ["ALDIA DORADA", "ALDIA XALAPA"]
-    const listaFiltro = estaciones.split(',').map(e => e.trim()).filter(e => e !== "");
-    
-    if (rol === 'Fletera') {
-        query['fletera'] = { $in: listaFiltro };
-    } else {
-        // Usamos $in con la lista limpia para comparar contra el campo 'estacion' de Mongo
-        query['estacion'] = { $in: listaFiltro };
-    }
-}
+        if (rol !== 'Admin' && rol !== 'Logistica_Policon' && estaciones && estaciones !== 'TODAS') {
+            const listaFiltro = estaciones.split(',').map(e => e.trim());
+            
+            if (rol === 'Fletera') {
+                // En Mongo tu captura muestra 'fletera'
+                query['fletera'] = { $in: listaFiltro };
+            } else {
+                // CAMBIO CLAVE: 'estacion' en minúsculas, tal como se ve en tu MongoDB Atlas
+                query['estacion'] = { $in: listaFiltro };
+            }
+        }
+
         console.log("Query ejecutada en Mongo:", query); // Para que revises en la consola de Render
 
         const pedidos = await Pedido.find(query).sort({ fechaRegistroDB: -1 });
