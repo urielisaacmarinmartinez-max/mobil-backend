@@ -187,41 +187,32 @@ app.post('/api/pedidos', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: error.message }); }
 });
 
-// 4. OBTENER PEDIDOS (Sincronizado con los nombres de campo reales en MongoDB)
+// 4. OBTENER PEDIDOS (Corregido para Gerentes y Admin)
 app.get('/api/obtener-pedidos', async (req, res) => {
     const { estaciones, rol, fechaFiltro } = req.query; 
     try {
         let query = {};
-
-        // 1. Filtro por Bloque (Columna de Excel sincronizada en minúsculas o con espacios)
-        // Nota: Revisa si en Mongo es 'bloque_de_programacion' o 'BLOQUE DE PROGRAMACIÓN'
         if (fechaFiltro && fechaFiltro !== 'null' && fechaFiltro !== '') {
             query['BLOQUE DE PROGRAMACIÓN'] = fechaFiltro.trim();
         }
 
-        // 2. Filtro por Rol y Estación (USANDO LAS LLAVES EN MINÚSCULAS DE TU CAPTURA)
-        if (rol !== 'Admin' && rol !== 'Logistica_Policon' && estaciones && estaciones !== 'TODAS') {
+        if (rol !== 'Admin' && estaciones && estaciones !== 'TODAS') {
             const listaFiltro = estaciones.split(',').map(e => e.trim());
-            
             if (rol === 'Fletera') {
-                // En Mongo tu captura muestra 'fletera'
-                query['fletera'] = { $in: listaFiltro };
+                query['FLETERA'] = { $in: listaFiltro };
             } else {
-                // CAMBIO CLAVE: 'estacion' en minúsculas, tal como se ve en tu MongoDB Atlas
-                query['estacion'] = { $in: listaFiltro };
+                // El gerente filtra por nombre de estación
+                query['ESTACIÓN'] = { $in: listaFiltro };
             }
         }
 
-        console.log("Query ejecutada en Mongo:", query); // Para que revises en la consola de Render
-
         const pedidos = await Pedido.find(query).sort({ fechaRegistroDB: -1 });
 
-        // 3. Función de conteo ajustada a la base de datos (llave 'estatus')
+        // Función auxiliar para contar ignorando Mayúsculas/Minúsculas
         const contarPorEstatus = (lista, statusBuscado) => {
             return lista.filter(p => {
-                // Usamos p.estatus en minúsculas
-                const s = (p.estatus || '').toUpperCase();
-                if (statusBuscado === 'PENDIENTE') return s === 'PENDIENTE' || s === 'NUEVO' || s === '';
+                const s = (p['ESTATUS'] || '').toUpperCase();
+                if (statusBuscado === 'PENDIENTE') return s === 'PENDIENTE' || s === 'NUEVO';
                 return s === statusBuscado;
             }).length;
         };
