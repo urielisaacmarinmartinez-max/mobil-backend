@@ -196,33 +196,25 @@ app.post('/api/pedidos', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: error.message }); }
 });
 
-// 4. OBTENER PEDIDOS (Versión Corregida)
+// 4. OBTENER PEDIDOS
 app.get('/api/obtener-pedidos', async (req, res) => {
     const { estaciones, rol, fechaFiltro } = req.query; 
     try {
         let query = {};
-        
-        // Filtro por Bloque/Fecha
-        if (fechaFiltro && fechaFiltro !== 'null' && fechaFiltro !== '') {
-            query.bloque = fechaFiltro.trim();
+        if (fechaFiltro && fechaFiltro !== 'null') query.bloque = fechaFiltro.trim();
+
+        if (rol !== 'Admin' && estaciones !== 'TODAS') {
+            if (rol === 'Fletera') {
+                query.fletera = estaciones;
+            } else {
+                const idsAsignados = estaciones.split(',').map(e => e.trim());
+                query.$or = [
+                    { estacion: { $in: idsAsignados } },
+                    { estacion: { $regex: idsAsignados.join('|'), $options: 'i' } }
+                ];
+            }
         }
 
-        // Filtro por Permisos
-        if (rol === 'Admin' || estaciones === 'TODAS') {
-            // Admin ve todo, no añadimos filtro de estación
-        } else if (rol === 'Fletera') {
-            query.fletera = estaciones;
-        } else {
-            // GERENTE: Limpiamos los nombres de las estaciones que vienen del front
-            const listaEstaciones = estaciones.split(',')
-                .map(e => e.trim())
-                .filter(e => e !== "");
-            
-            // Buscamos coincidencia en el campo 'estacion' de Mongo
-            query.estacion = { $in: listaEstaciones };
-        }
-
-        console.log("🔍 Ejecutando Query en Mongo:", JSON.stringify(query)); // Esto saldrá en tu Log de Render
         const pedidos = await Pedido.find(query).sort({ fechaRegistroDB: -1 });
 
         res.json({ 
@@ -234,10 +226,7 @@ app.get('/api/obtener-pedidos', async (req, res) => {
                 programados: pedidos.filter(p => p.estatus === 'Aceptado').length
             }
         });
-    } catch (error) { 
-        console.error("❌ Error en obtener-pedidos:", error);
-        res.status(500).json({ pedidos: [] }); 
-    }
+    } catch (error) { res.status(500).json({ pedidos: [] }); }
 });
 
 // 5. ACTUALIZAR TIRILLA
