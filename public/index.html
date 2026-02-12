@@ -835,54 +835,58 @@ function dibujarEstaciones() {
     const container = document.getElementById('estacionesCardsContainer');
     const userData = JSON.parse(localStorage.getItem('usuario'));
     
-    // Seguridad básica
-    if (!container || !userData || !userData.estaciones) return;
+    // 1. Seguridad básica
+    if (!container || !userData) return;
 
-    // 1. Identificamos los IDs y si es Admin
-    const misEstacionesIds = userData.estaciones.split(',').map(s => s.trim().toUpperCase());
-    const esAdmin = misEstacionesIds.includes('TODAS') || userData.rol === 'Logistica_Policon';
-
-    // 2. FILTRADO CORREGIDO:
-    // Si es admin usa todo (estacionesData ya viene cargada de la función anterior)
-    // Si es gerente, comparamos sus IDs contra el ID de la estación
-    const filtradas = esAdmin 
-        ? estacionesData 
-        : estacionesData.filter(est => {
-            const idEst = est.id ? est.id.toString().toUpperCase() : '';
-            return misEstacionesIds.includes(idEst);
-        });
+    // 2. Usamos directamente estacionesData (que ya viene filtrada de cargarEstaciones)
+    // No volvemos a filtrar aquí para evitar conflictos de ID vs Nombre.
+    const filtradas = estacionesData || [];
 
     // 3. Validación de visualización
     if (filtradas.length === 0) {
-        container.innerHTML = `<div class="p-20 text-center"><p class="text-slate-400 font-bold">No hay estaciones asignadas para mostrar.</p></div>`;
+        container.innerHTML = `
+            <div class="col-span-full p-20 text-center bg-white rounded-[3rem] border-2 border-dashed border-slate-100">
+                <i class="fas fa-gas-pump text-slate-100 text-6xl mb-4"></i>
+                <p class="text-slate-400 font-bold">No hay estaciones para mostrar en este momento.</p>
+                <p class="text-[9px] text-slate-300 uppercase mt-2">Verifica tu conexión o asignación: ${userData.estaciones}</p>
+            </div>`;
         return;
     }
 
-    // 4. TU DISEÑO ORIGINAL (INTACTO)
+    // 4. DISEÑO ORIGINAL CON MAPEO ROBUSTO
     container.innerHTML = filtradas.map(est => {
-        const cap = est.capacidad || { extra: 0, supreme: 0, diesel: 0 };
-        const vol = est.volumenActual || { extra: 0, supreme: 0, diesel: 0 };
-        const vta = est.ventaPromedio || { extra: 0, supreme: 0, diesel: 0 };
+        // Mapeo inteligente de campos (Soporta nombre, NOMBRE, id, ID)
+        const idReal = est.id || est.ID || est._id || 'S/N';
+        const nombreReal = est.nombre || est.NOMBRE || 'Estación sin nombre';
+        const direccionReal = est.direccion || est.DIRECCIÓN || '';
+
+        // Manejo seguro de objetos anidados (Capacidades, Inventarios)
+        const cap = est.capacidad || est.CAPACIDAD || { extra: 0, supreme: 0, diesel: 0 };
+        const vol = est.volumenActual || est.VOLUMEN || { extra: 0, supreme: 0, diesel: 0 };
+        const vta = est.ventaPromedio || est.VENTA || { extra: 0, supreme: 0, diesel: 0 };
         
         return `
-        <div class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100 mb-6">
+        <div class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100 mb-6 transition-all hover:shadow-md">
             <div class="flex justify-between items-start mb-6">
                 <div>
-                    <span class="text-[10px] font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full mb-2 inline-block">${est.id}</span>
-                    <h2 class="text-2xl font-black text-slate-800">${est.nombre || 'Estación'}</h2>
-                    <p class="text-[10px] text-slate-400">${est.direccion || ''}</p>
+                    <span class="text-[10px] font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full mb-2 inline-block">${idReal}</span>
+                    <h2 class="text-2xl font-black text-slate-800 uppercase">${nombreReal}</h2>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-tight">${direccionReal}</p>
                 </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 ${renderFuelCard('EXTRA', 'emerald', cap.extra, vol.extra, vta.extra)}
                 ${renderFuelCard('SUPREME', 'red', cap.supreme, vol.supreme, vta.supreme)}
-                ${Number(cap.diesel) > 0 
+                ${(Number(cap.diesel || 0) > 0) 
                     ? renderFuelCard('DIESEL', 'slate', cap.diesel, vol.diesel, vta.diesel) 
-                    : `<div class="bg-slate-50 rounded-3xl border border-dashed border-slate-200 flex items-center justify-center p-8 text-[8px] font-bold text-slate-300 uppercase">Sin Diesel</div>`}
+                    : `<div class="bg-slate-50 rounded-[2rem] border border-dashed border-slate-200 flex flex-col items-center justify-center p-8">
+                         <i class="fas fa-eye-slash text-slate-200 mb-2"></i>
+                         <span class="text-[8px] font-black text-slate-300 uppercase">Sin Diesel</span>
+                       </div>`}
             </div>
-            <button onclick="abrirModalTirilla('${est.id}', '${est.nombre}')" 
-                    class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-sm uppercase hover:bg-blue-600 transition-all shadow-xl">
-                Actualizar Inventario
+            <button onclick="abrirModalTirilla('${idReal}', '${nombreReal}')" 
+                    class="w-full bg-slate-900 text-white py-5 rounded-[1.5rem] font-black text-sm uppercase hover:bg-blue-600 transition-all shadow-lg hover:shadow-blue-200 active:scale-95">
+                <i class="fas fa-sync-alt mr-2"></i> Actualizar Inventario
             </button>
         </div>`;
     }).join('');
