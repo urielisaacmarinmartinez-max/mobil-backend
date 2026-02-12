@@ -188,40 +188,37 @@ app.post('/api/pedidos', async (req, res) => {
 });
 
 // 4. OBTENER PEDIDOS (Corregido para Gerentes y Admin)
-// 4. OBTENER PEDIDOS (Sincronizado con los nombres de campo reales en MongoDB)
 app.get('/api/obtener-pedidos', async (req, res) => {
     const { estaciones, rol, fechaFiltro } = req.query; 
     try {
         let query = {};
 
-        // 1. Filtro por Bloque (Columna de Excel sincronizada en minúsculas o con espacios)
-        // Nota: Revisa si en Mongo es 'bloque_de_programacion' o 'BLOQUE DE PROGRAMACIÓN'
+        // 1. Filtro por Bloque (Usando la llave exacta del esquema)
         if (fechaFiltro && fechaFiltro !== 'null' && fechaFiltro !== '') {
             query['BLOQUE DE PROGRAMACIÓN'] = fechaFiltro.trim();
         }
 
-        // 2. Filtro por Rol y Estación (USANDO LAS LLAVES EN MINÚSCULAS DE TU CAPTURA)
+        // 2. Filtro por Rol y Estación (Sincronizado con pedidoSchema)
         if (rol !== 'Admin' && rol !== 'Logistica_Policon' && estaciones && estaciones !== 'TODAS') {
             const listaFiltro = estaciones.split(',').map(e => e.trim());
             
             if (rol === 'Fletera') {
-                // En Mongo tu captura muestra 'fletera'
-                query['fletera'] = { $in: listaFiltro };
+                query['FLETERA'] = { $in: listaFiltro };
             } else {
-                // CAMBIO CLAVE: 'estacion' en minúsculas, tal como se ve en tu MongoDB Atlas
-                query['estacion'] = { $in: listaFiltro };
+                // CORRECCIÓN: Usamos 'ESTACIÓN' en MAYÚSCULAS para que coincida con tu esquema
+                query['ESTACIÓN'] = { $in: listaFiltro };
             }
         }
 
-        console.log("Query ejecutada en Mongo:", query); // Para que revises en la consola de Render
+        console.log("🔍 Query ejecutada:", JSON.stringify(query));
 
         const pedidos = await Pedido.find(query).sort({ fechaRegistroDB: -1 });
 
-        // 3. Función de conteo ajustada a la base de datos (llave 'estatus')
+        // 3. Función de conteo (Usando la llave exacta 'ESTATUS')
         const contarPorEstatus = (lista, statusBuscado) => {
             return lista.filter(p => {
-                // Usamos p.estatus en minúsculas
-                const s = (p.estatus || '').toUpperCase();
+                // Usamos p['ESTATUS'] porque así está en el Schema
+                const s = (p['ESTATUS'] || '').toUpperCase();
                 if (statusBuscado === 'PENDIENTE') return s === 'PENDIENTE' || s === 'NUEVO' || s === '';
                 return s === statusBuscado;
             }).length;
@@ -237,7 +234,7 @@ app.get('/api/obtener-pedidos', async (req, res) => {
             }
         });
     } catch (error) { 
-        console.error("Error en obtener-pedidos:", error);
+        console.error("❌ Error en obtener-pedidos:", error);
         res.status(500).json({ pedidos: [], estadisticas: { pendientes: 0, enRuta: 0, entregados: 0, programados: 0 } }); 
     }
 });
