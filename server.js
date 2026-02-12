@@ -19,38 +19,31 @@ mongoose.connect(process.env.MONGODB_URI)
   })
   .catch(err => console.error('❌ Error conexión Mongo:', err));
 
-// --- ESQUEMA COMPLETO (Sincronizado con nombres de Excel para evitar errores en Frontend) ---
+// --- ESQUEMA HÍBRIDO (Mantiene compatibilidad con Excel y MongoDB Atlas) ---
 const pedidoSchema = new mongoose.Schema({
     folio: { type: String, unique: true },
+    // Definimos las llaves en minúsculas que ya existen en tu MongoDB Atlas
+    estacion: String,
+    producto: String,
+    litros: Number,
+    total: String,
+    estatus: String,
+    bloque: String,
+    fletera: String,
+    unidad: String,
+    orden: String,
+    // Mantenemos estas por si el Excel las envía con nombres largos
     'FECHA DE REGISTRO': String,
     'BLOQUE DE PROGRAMACIÓN': String,
     'ESTACIÓN': String,
     'TIPO DE PRODUCTO': String,
-    'LITROS': Number,
-    'TOTAL': String,
-    'FECHA DE ENTREGA': String,
-    'PRIORIDAD': String,
     'ESTATUS': String,
-    'USUARIO': String,
-    'ESTATUS DE CARGA': String,
-    'CONFIRMACIÓN O REUBICACIÓN': String,
-    'ORDEN RELACIONADA': String,
-    'ORDEN': String,
-    'FLETERA': String,
-    'UNIDAD': String,
-    'PLACA 1': String,
-    'PLACA 2': String,
-    'OPERADOR': String,
-    'CANTIDAD EXACTA': String,
-    'ETA': String,
-    'FECHA DE DESCARGA': String,
-    'TIPO DE OPERACIÓN': String,
-    'FACTURA': String,
-    'COMPRA': String,
-    'CANCELACIÓN DE PEDIDO': String,
-    'MOTIVO DE CANCELACIÓN': String,
     fechaRegistroDB: { type: Date, default: Date.now }
+}, { 
+    strict: false, // ¡ESTO ES VITAL! Permite leer cualquier campo aunque no esté aquí
+    collection: 'pedidos' 
 });
+
 const Pedido = mongoose.model('Pedido', pedidoSchema);
 
 const serviceAccountAuth = new JWT({
@@ -193,32 +186,29 @@ app.get('/api/obtener-pedidos', async (req, res) => {
     try {
         let query = {};
 
-        // 1. Filtro por Bloque (Usando la llave exacta del esquema)
+        // 1. Filtro por Bloque (Usando la llave que vimos en tu Atlas)
         if (fechaFiltro && fechaFiltro !== 'null' && fechaFiltro !== '') {
-            query['BLOQUE DE PROGRAMACIÓN'] = fechaFiltro.trim();
+            query['bloque'] = fechaFiltro.trim();
         }
 
-        // 2. Filtro por Rol y Estación (Sincronizado con pedidoSchema)
+        // 2. Filtro por Rol y Estación
         if (rol !== 'Admin' && rol !== 'Logistica_Policon' && estaciones && estaciones !== 'TODAS') {
             const listaFiltro = estaciones.split(',').map(e => e.trim());
             
             if (rol === 'Fletera') {
-                query['FLETERA'] = { $in: listaFiltro };
+                query['fletera'] = { $in: listaFiltro };
             } else {
-                // CORRECCIÓN: Usamos 'ESTACIÓN' en MAYÚSCULAS para que coincida con tu esquema
-                query['ESTACIÓN'] = { $in: listaFiltro };
+                // Filtro para Gerentes: Busca en la columna 'estacion' (minúsculas)
+                query['estacion'] = { $in: listaFiltro };
             }
         }
 
-        console.log("🔍 Query ejecutada:", JSON.stringify(query));
-
         const pedidos = await Pedido.find(query).sort({ fechaRegistroDB: -1 });
 
-        // 3. Función de conteo (Usando la llave exacta 'ESTATUS')
+        // 3. Función de conteo ajustada a la realidad de tus datos
         const contarPorEstatus = (lista, statusBuscado) => {
             return lista.filter(p => {
-                // Usamos p['ESTATUS'] porque así está en el Schema
-                const s = (p['ESTATUS'] || '').toUpperCase();
+                const s = (p.estatus || '').toUpperCase();
                 if (statusBuscado === 'PENDIENTE') return s === 'PENDIENTE' || s === 'NUEVO' || s === '';
                 return s === statusBuscado;
             }).length;
@@ -234,8 +224,8 @@ app.get('/api/obtener-pedidos', async (req, res) => {
             }
         });
     } catch (error) { 
-        console.error("❌ Error en obtener-pedidos:", error);
-        res.status(500).json({ pedidos: [], estadisticas: { pendientes: 0, enRuta: 0, entregados: 0, programados: 0 } }); 
+        console.error("❌ Error:", error);
+        res.status(500).json({ pedidos: [] }); 
     }
 });
 
