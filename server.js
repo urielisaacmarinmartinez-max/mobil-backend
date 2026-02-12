@@ -188,35 +188,58 @@ app.post('/api/pedidos', async (req, res) => {
 });
 
 // 4. OBTENER PEDIDOS (Corregido para Gerentes y Admin)
+// 4. OBTENER PEDIDOS (Sincronizado con los nombres de campo reales en MongoDB)
 app.get('/api/obtener-pedidos', async (req, res) => {
     const { estaciones, rol, fechaFiltro } = req.query; 
     try {
         let query = {};
+
+        // 1. Filtro por Bloque (Columna de Excel sincronizada en minúsculas o con espacios)
+        // Nota: Revisa si en Mongo es 'bloque_de_programacion' o 'BLOQUE DE PROGRAMACIÓN'
         if (fechaFiltro && fechaFiltro !== 'null' && fechaFiltro !== '') {
             query['BLOQUE DE PROGRAMACIÓN'] = fechaFiltro.trim();
         }
 
-        if (rol !== 'Admin' && estaciones !== 'TODAS') {
+        // 2. Filtro por Rol y Estación (USANDO LAS LLAVES EN MINÚSCULAS DE TU CAPTURA)
+        if (rol !== 'Admin' && rol !== 'Logistica_Policon' && estaciones && estaciones !== 'TODAS') {
+            const listaFiltro = estaciones.split(',').map(e => e.trim());
+            
             if (rol === 'Fletera') {
-                query['FLETERA'] = estaciones;
+                // En Mongo tu captura muestra 'fletera'
+                query['fletera'] = { $in: listaFiltro };
             } else {
-                const listaEstaciones = estaciones.split(',').map(e => e.trim());
-                query['ESTACIÓN'] = { $in: listaEstaciones };
+                // CAMBIO CLAVE: 'estacion' en minúsculas, tal como se ve en tu MongoDB Atlas
+                query['estacion'] = { $in: listaFiltro };
             }
         }
 
+        console.log("Query ejecutada en Mongo:", query); // Para que revises en la consola de Render
+
         const pedidos = await Pedido.find(query).sort({ fechaRegistroDB: -1 });
+
+        // 3. Función de conteo ajustada a la base de datos (llave 'estatus')
+        const contarPorEstatus = (lista, statusBuscado) => {
+            return lista.filter(p => {
+                // Usamos p.estatus en minúsculas
+                const s = (p.estatus || '').toUpperCase();
+                if (statusBuscado === 'PENDIENTE') return s === 'PENDIENTE' || s === 'NUEVO' || s === '';
+                return s === statusBuscado;
+            }).length;
+        };
 
         res.json({ 
             pedidos, 
             estadisticas: {
-                pendientes: pedidos.filter(p => p['ESTATUS'] === 'Pendiente' || p['ESTATUS'] === 'Nuevo').length,
-                enRuta: pedidos.filter(p => p['ESTATUS'] === 'En Ruta').length,
-                entregados: pedidos.filter(p => p['ESTATUS'] === 'Entregado').length,
-                programados: pedidos.filter(p => p['ESTATUS'] === 'Aceptado').length
+                pendientes: contarPorEstatus(pedidos, 'PENDIENTE'),
+                enRuta: contarPorEstatus(pedidos, 'EN RUTA'),
+                entregados: contarPorEstatus(pedidos, 'ENTREGADO'),
+                programados: contarPorEstatus(pedidos, 'ACEPTADO')
             }
         });
-    } catch (error) { res.status(500).json({ pedidos: [] }); }
+    } catch (error) { 
+        console.error("Error en obtener-pedidos:", error);
+        res.status(500).json({ pedidos: [], estadisticas: { pendientes: 0, enRuta: 0, entregados: 0, programados: 0 } }); 
+    }
 });
 
 // 5. ACTUALIZAR TIRILLA
