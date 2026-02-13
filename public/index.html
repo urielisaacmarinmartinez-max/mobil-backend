@@ -1407,20 +1407,24 @@ async function verDetallePedido(id) {
     const modal = document.getElementById('modalDetallesPedido');
     if (!modal) return;
     
+    // Mostramos el modal primero para dar sensación de velocidad
     modal.classList.remove('hidden');
 
     try {
-        // 1. OBTENCIÓN DE DATOS
+        // 1. OBTENCIÓN DE DATOS (Usando la ruta plural que sí funciona en tu server.js)
         const response = await fetch(`/api/obtener-pedidos?estaciones=${encodeURIComponent(userData.estaciones)}&rol=${userData.rol}`);
         const data = await response.json();
+        
+        // Buscamos el pedido específico por su ID
         const p = data.pedidos.find(item => (item._id || item.id) === id);
 
         if (!p) {
             console.error("Pedido no encontrado en el set de datos");
+            document.getElementById('det_estacion').textContent = "No encontrado";
             return;
         }
 
-        // 2. MAPEADO DE VARIABLES (Priorizando nombres de tu Excel)
+        // 2. MAPEADO DE SEGURIDAD (Busca en Mayúsculas de Excel y Minúsculas de Mongo)
         const estacion   = p['ESTACIÓN'] || p.estacion || '---';
         const producto   = p['TIPO DE PRODUCTO'] || p.producto || '---';
         const litros     = p['LITROS'] || p.litros || 0;
@@ -1429,72 +1433,89 @@ async function verDetallePedido(id) {
         const fechaReg   = p['FECHA DE REGISTRO'] || p.fecha_registro || '';
         const folio      = p['FOLIO'] || p.folio || 'S/F';
         
-        // Datos de Logística (Columnas P a V de tu imagen de Excel)
+        // Datos de Logística (Doble llave para asegurar captura)
         const fletera    = p['FLETERA'] || p.fletera || 'PENDIENTE';
         const unidad     = p['UNIDAD'] || p.unidad || 'SIN ASIGNAR';
-        const placa1     = p['PLACA 1'] || '';
-        const placa2     = p['PLACA 2'] || '';
-        const operador   = p['OPERADOR'] || '';
+        const placa1     = p['PLACA 1'] || p.placa1 || '';
+        const placa2     = p['PLACA 2'] || p.placa2 || '';
+        const operador   = p['OPERADOR'] || p.operador || '';
         const cantExacta = p['CANTIDAD EXACTA'] || p.cantidad_exacta || '';
         const eta        = p['ETA'] || p.eta || '--:--';
 
         // 3. LLENADO DE CABECERA Y FOLIO
         document.getElementById('det_estacion').textContent = estacion;
         document.getElementById('det_status').textContent = estatus;
+        
         const elFolio = document.getElementById('det_folio');
         if (elFolio) elFolio.textContent = folio;
 
-        // 4. INFORMACIÓN PRINCIPAL
+        // 4. INFORMACIÓN PRINCIPAL (Combustible y Litros)
         document.getElementById('det_producto').textContent = producto;
         document.getElementById('det_litros').textContent = `${Number(litros).toLocaleString()} L`;
         document.getElementById('det_prioridad').textContent = prioridad;
 
-        // 5. FECHA DE SOLICITUD
+        // 5. FECHA Y HORA DE SOLICITUD
         if(fechaReg) {
             const parts = String(fechaReg).split(',');
             document.getElementById('det_fecha_solicitud').textContent = parts[0].trim();
             const elHora = document.getElementById('det_hora_solicitud');
-            if(elHora) elHora.textContent = parts[1] ? parts[1].trim() : '';
+            if(elHora) elHora.textContent = parts[1] ? parts[1].trim() : '--:--';
         }
 
-        // 6. BLOQUE DE LOGÍSTICA (RESTAURADO)
+        // 6. BLOQUE DE LOGÍSTICA (RESTAURADO Y MEJORADO)
         // Fletera y Unidad
         document.getElementById('det_fletera_new').textContent = fletera;
         document.getElementById('det_unidad_new').textContent = unidad;
         
-        // Placas y Operador (Crucial para que no se vea vacío)
+        // Placas: Combinamos Placa 1 y Placa 2 si ambas existen
         const elPlacas = document.getElementById('det_placas_new');
-        if(elPlacas) elPlacas.textContent = `${placa1} ${placa2 ? '/ ' + placa2 : ''}`;
+        if(elPlacas) {
+            const textoPlacas = [placa1, placa2].filter(pl => pl && pl.trim() !== "").join(' / ');
+            elPlacas.textContent = textoPlacas || 'S/P';
+        }
         
+        // Operador
         const elOperador = document.getElementById('det_operador_new');
         if(elOperador) elOperador.textContent = operador || 'SIN ASIGNAR';
 
-        // Cantidad Exacta (Los 15,000 L del Excel)
+        // Cantidad Exacta (Aquí es donde aparecerán los 15,000 L)
         const elCantEx = document.getElementById('det_cantidad_exacta_new');
         if (elCantEx) {
-            elCantEx.textContent = cantExacta ? `${Number(cantExacta).toLocaleString()} L` : '---';
-            if(cantExacta) elCantEx.classList.add('font-black', 'text-slate-900');
+            if (cantExacta && cantExacta !== "0") {
+                elCantEx.textContent = `${Number(cantExacta).toLocaleString()} L`;
+                elCantEx.classList.add('font-bold', 'text-blue-900'); // Resaltado para que se note
+            } else {
+                elCantEx.textContent = '---';
+                elCantEx.classList.remove('font-bold', 'text-blue-900');
+            }
         }
         
-        // ETA (Llegada)
+        // ETA (Hora estimada de llegada)
         const elEta = document.getElementById('det_eta_new');
         if(elEta) elEta.textContent = eta;
 
-        // 7. VISIBILIDAD DE SECCIONES POR ROL
+        // 7. CONTROL DE VISIBILIDAD SEGÚN ROL Y CONFIRMACIÓN
         const esGerente = userData.rol === 'Gerente Estación';
-        const estaConfirmado = (p['CONFIRMACIÓN O REUBICACIÓN'] || p.confirmacion || "").trim() !== "";
-        const areaAsignacion = document.getElementById('det_area_asignacion_nueva');
+        // Verificamos si existe alguna confirmación en cualquier formato de llave
+        const confirmacionVal = p['CONFIRMACIÓN O REUBICACIÓN'] || p.confirmacion || "";
+        const estaConfirmado = confirmacionVal.toString().trim() !== "";
         
+        const areaAsignacion = document.getElementById('det_area_asignacion_nueva');
         if (areaAsignacion) {
-            // Si es gerente y no hay confirmación, ocultamos el detalle logístico
-            (esGerente && !estaConfirmado) ? areaAsignacion.classList.add('hidden') : areaAsignacion.classList.remove('hidden');
+            // Regla: Si es Gerente pero Logística aún no confirma/asigna, ocultamos la zona azul
+            if (esGerente && !estaConfirmado) {
+                areaAsignacion.classList.add('hidden');
+            } else {
+                areaAsignacion.classList.remove('hidden');
+            }
         }
 
     } catch (e) {
-        console.error("Error al renderizar el detalle completo:", e);
+        console.error("Error crítico al renderizar el detalle:", e);
+        // Opcional: mostrar un mensaje de error amigable en el modal
+        document.getElementById('det_estacion').textContent = "Error al cargar datos";
     }
 }
-
 function cerrarModalDetalles() {
     document.getElementById('modalDetallesPedido').classList.add('hidden');
 }
@@ -1746,4 +1767,5 @@ window.onload = initDashboard;
 </style>
 
 </body>
+
 </html>
