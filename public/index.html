@@ -1405,46 +1405,66 @@ async function verDetallePedido(id) {
     if (!userData) return;
 
     const modal = document.getElementById('modalDetallesPedido');
+    if (!modal) return;
+    
     modal.classList.remove('hidden');
+    // Limpieza inicial para feedback visual
     document.getElementById('det_estacion').textContent = "Cargando...";
 
     try {
         const response = await fetch(`/api/obtener-pedido-detallado?id=${id}`);
         const p = await response.json();
 
-        // 1. IDENTIFICAR ESTATUS Y ROL
-        let esGerente = userData.rol === 'Gerente Estación';
-        // Ajustamos la lógica de confirmación con el nombre exacto de la columna
-        let estaConfirmado = p.confirmacion && p.confirmacion.trim() !== "";
-        document.getElementById('det_status').textContent = (esGerente && !estaConfirmado) ? "Pendiente" : (p.estatus || '---');
+        // 1. MAPEADO DE SEGURIDAD (Mismo que en la lista para consistencia)
+        const folio = p.FOLIO || p.folio || 'S/F';
+        const estacion = p.ESTACIÓN || p.estacion || '---';
+        const producto = p['TIPO DE PRODUCTO'] || p.producto || '---';
+        const litros = p.LITROS || p.litros || '0';
+        const prioridad = p.PRIORIDAD || p.prioridad || 'Normal';
+        const estatus = p.ESTATUS || p.estatus || 'Pendiente';
+        const confirmacion = p.CONFIRMACIÓN || p.confirmacion || "";
+        const bloque = p['BLOQUE DE PROGRAMACIÓN'] || p.bloque || 'Sin Programar';
+        const fechaReg = p['FECHA DE REGISTRO'] || p.fecha_registro || '';
 
-        // 2. CABECERA Y DATOS PRINCIPALES
-        document.getElementById('det_estacion').textContent = p.estacion || '---';
-        document.getElementById('det_producto').textContent = p.producto || '---';
-        document.getElementById('det_litros').textContent = `${p.litros || '0'} L`;
-        document.getElementById('det_prioridad').textContent = p.prioridad || 'Normal';
+        // 2. IDENTIFICAR ESTATUS Y ROL
+        let esGerente = userData.rol === 'Gerente Estación';
+        let estaConfirmado = confirmacion.trim() !== "";
         
-        // NUEVO: Bloque de Programación
+        // Elementos de cabecera
+        document.getElementById('det_status').textContent = (esGerente && !estaConfirmado) ? "Pendiente" : estatus;
+        
+        // El ID del folio es vital para la cancelación
+        const elFolio = document.getElementById('det_folio');
+        if (elFolio) elFolio.textContent = folio;
+
+        // 3. DATOS PRINCIPALES
+        document.getElementById('det_estacion').textContent = estacion;
+        document.getElementById('det_producto').textContent = producto;
+        document.getElementById('det_litros').textContent = `${Number(litros).toLocaleString()} L`;
+        document.getElementById('det_prioridad').textContent = prioridad;
+        
+        // Bloque de Programación
         const elBloque = document.getElementById('det_bloque');
         if(elBloque) {
-            elBloque.textContent = p.bloque || 'Sin Programar';
-            elBloque.className = p.bloque ? "font-bold text-blue-700" : "text-slate-400";
+            elBloque.textContent = bloque;
+            elBloque.className = (bloque !== 'Sin Programar') ? "font-bold text-blue-700" : "text-slate-400";
         }
 
-        // 3. FECHA DE SOLICITUD (Columna B - FECHA DE REGISTRO)
+        // 4. FECHA Y HORA (Parseo de "10/02/2026, 14:30:00")
         const elFecha = document.getElementById('det_fecha_solicitud');
         const elHora = document.getElementById('det_hora_solicitud');
-        if(elFecha && p.fecha_registro) {
-            const parts = String(p.fecha_registro).split(',');
+        if(elFecha && fechaReg) {
+            const parts = String(fechaReg).split(',');
             elFecha.textContent = parts[0].trim();
-            if(elHora) elHora.textContent = parts[1] ? parts[1].trim() : '';
+            if(elHora) elHora.textContent = parts[1] ? parts[1].trim() : '--:--';
         }
 
-        // 4. CANTIDAD EXACTA (Columna R)
+        // 5. CANTIDAD EXACTA (Columna R)
+        const cantidadExacta = p['CANTIDAD EXACTA'] || p.cantidad_exacta;
         const elCantEx = document.getElementById('det_cantidad_exacta_new');
         if (elCantEx) {
-            if (p.cantidad_exacta && p.cantidad_exacta != "0" && p.cantidad_exacta != "") {
-                elCantEx.textContent = `${p.cantidad_exacta} L`;
+            if (cantidadExacta && cantidadExacta != "0" && cantidadExacta != "") {
+                elCantEx.textContent = `${Number(cantidadExacta).toLocaleString()} L`;
                 elCantEx.classList.add('font-black', 'text-slate-900');
             } else {
                 elCantEx.textContent = '---';
@@ -1452,32 +1472,31 @@ async function verDetallePedido(id) {
             }
         }
 
-        // 5. DATOS DE LOGÍSTICA (Bloque Azul)
-        document.getElementById('det_fletera_new').textContent = p.fletera || 'PENDIENTE';
-        document.getElementById('det_unidad_new').textContent = p.unidad || 'SIN ASIGNAR';
-        document.getElementById('det_eta_new').textContent = p.eta || '--:--';
+        // 6. DATOS DE LOGÍSTICA
+        document.getElementById('det_fletera_new').textContent = p.FLETERA || p.fletera || 'PENDIENTE';
+        document.getElementById('det_unidad_new').textContent = p.UNIDAD || p.unidad || 'SIN ASIGNAR';
+        document.getElementById('det_eta_new').textContent = p.ETA || p.eta || '--:--';
         
-        // NUEVO: Mostrar Placas si existen
         const elPlacas = document.getElementById('det_placas_new');
-        if(elPlacas) elPlacas.textContent = p.placas || '';
+        if(elPlacas) elPlacas.textContent = p['PLACA 1'] || p.placas || '';
 
-        // 6. CONTROL DE VISIBILIDAD DE ASIGNACIÓN
+        // 7. CONTROL DE VISIBILIDAD DE ASIGNACIÓN (Bloque Azul)
         const areaAsignacion = document.getElementById('det_area_asignacion_nueva');
         if (areaAsignacion) {
-            // Si es gerente y no está confirmado, ocultamos el bloque azul
             (esGerente && !estaConfirmado) ? areaAsignacion.classList.add('hidden') : areaAsignacion.classList.remove('hidden');
         }
 
-        // 7. BOTÓN CANCELAR
+        // 8. BOTÓN CANCELAR
         const areaCancel = document.getElementById('area_cancelacion');
         if(areaCancel) {
-            p.estatus === 'Pendiente' ? areaCancel.classList.remove('hidden') : areaCancel.classList.add('hidden');
-            areaCancel.querySelector('button').onclick = () => procesarCancelacion(id);
+            // Solo permitir cancelar si está realmente pendiente
+            estatus.toLowerCase() === 'pendiente' ? areaCancel.classList.remove('hidden') : areaCancel.classList.add('hidden');
+            areaCancel.querySelector('button').onclick = () => procesarCancelacion();
         }
 
     } catch (e) {
         console.error("Error al cargar detalles del pedido:", e);
-        document.getElementById('det_estacion').textContent = "Error al cargar";
+        document.getElementById('det_estacion').textContent = "Error al obtener datos";
     }
 }
 
