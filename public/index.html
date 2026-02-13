@@ -743,6 +743,7 @@ async function cargarPedidosDashboard() {
         }
     }
 };
+
 // ... (aquí terminan tus funciones de irDashboard o logout)
 
 
@@ -814,55 +815,123 @@ async function cargarPedidosDashboard() {
         }
     };
 
-    // NAVEGACIÓN Y VISTAS
-   
-    function togglePanel() {
-        const p = document.getElementById('sidePanel');
-        const o = document.getElementById('overlay');
-        p.classList.toggle('translate-x-full');
-        o.classList.toggle('hidden');
-        setTimeout(() => o.classList.toggle('opacity-100'), 10);
-    }
+    // ==========================================
+// 1. SISTEMA DE NAVEGACIÓN (VISUAL)
+// ==========================================
 
-    function logout() {
-        localStorage.clear();
-        window.location.href = '/login.html';
-    }
+function actualizarEstiloNavegacion(idActivo) {
+    const botones = document.querySelectorAll('.nav-item');
+    
+    botones.forEach(btn => {
+        const esElActivo = btn.id === idActivo;
+        const iconContainer = btn.querySelector('div');
 
-    function irMisEstaciones() {
-        const dash = document.getElementById('dashboardView');
-        const estView = document.getElementById('estacionesView');
-        const pedView = document.getElementById('pedidosView');
-        
-        if(dash && estView && pedView) {
-            dash.classList.add('hidden');
-            pedView.classList.add('hidden');
-            estView.classList.remove('hidden');
-            document.getElementById('listaPedidosCompleta').innerHTML = '';
-            dibujarEstaciones(); 
+        if (esElActivo) {
+            btn.classList.add('bg-blue-600', 'text-white', 'shadow-lg', 'shadow-blue-900/20');
+            btn.classList.remove('text-slate-400', 'hover:bg-white/5');
+            if (iconContainer) {
+                iconContainer.classList.add('bg-white/10');
+                iconContainer.classList.remove('bg-white/5');
+            }
+        } else {
+            btn.classList.remove('bg-blue-600', 'text-white', 'shadow-lg', 'shadow-blue-900/20');
+            btn.classList.add('text-slate-400', 'hover:bg-white/5');
+            if (iconContainer) {
+                iconContainer.classList.remove('bg-white/10');
+                iconContainer.classList.add('bg-white/5');
+            }
         }
-        window.scrollTo(0, 0);
-    }
+    });
+}
 
-    function irDashboard() {
-        document.getElementById('estacionesView').classList.add('hidden');
-        document.getElementById('dashboardView').classList.remove('hidden');
-        document.getElementById('pedidosView').classList.add('hidden');
-        window.scrollTo(0, 0);
+function ocultarTodasLasVistas() {
+    ['dashboardView', 'estacionesView', 'pedidosView', 'vistaOperadores', 'vistaUnidades'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.classList.add('hidden');
+    });
+}
+
+// ==========================================
+// 2. FUNCIONES DE VISTA (ASIGNACIÓN DE CLICS)
+// ==========================================
+
+function irDashboard() {
+    ocultarTodasLasVistas(); // Usamos la función de limpieza para mayor seguridad
+    document.getElementById('dashboardView').classList.remove('hidden');
+    actualizarEstiloNavegacion('btn-nav-dashboard'); // Activa botón azul
+    window.scrollTo(0, 0);
+}
+
+function irMisEstaciones() {
+    const dash = document.getElementById('dashboardView');
+    const estView = document.getElementById('estacionesView');
+    const pedView = document.getElementById('pedidosView');
+    
+    if(dash && estView && pedView) {
+        ocultarTodasLasVistas();
+        estView.classList.remove('hidden');
+        document.getElementById('listaPedidosCompleta').innerHTML = '';
+        dibujarEstaciones(); 
+        actualizarEstiloNavegacion('btn-nav-estaciones'); // Activa botón azul
     }
+    window.scrollTo(0, 0);
+}
+
+function irMisPedidos() {
+    ocultarTodasLasVistas();
+    const pedView = document.getElementById('pedidosView');
+    if(pedView) {
+        pedView.classList.remove('hidden');
+        renderizarPedidosLista('Todos');
+        actualizarEstiloNavegacion('btn-nav-pedidos'); // Activa botón azul
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function irOperadores() {
+    ocultarTodasLasVistas();
+    const v = document.getElementById('vistaOperadores');
+    if(v) {
+        v.classList.remove('hidden');
+        actualizarEstiloNavegacion('btn-operadores'); // Activa botón azul
+    }
+}
+
+function irUnidades() {
+    ocultarTodasLasVistas();
+    const v = document.getElementById('vistaUnidades');
+    if(v) {
+        v.classList.remove('hidden');
+        actualizarEstiloNavegacion('btn-unidades'); // Activa botón azul
+    }
+}
+
+// Nota: Puedes añadir irMisCréditos siguiendo este mismo patrón
+
+// ==========================================
+// 3. UTILIDADES Y RENDERIZADO (SIN CAMBIOS)
+// ==========================================
+
+function togglePanel() {
+    const p = document.getElementById('sidePanel');
+    const o = document.getElementById('overlay');
+    p.classList.toggle('translate-x-full');
+    o.classList.toggle('hidden');
+    setTimeout(() => o.classList.toggle('opacity-100'), 10);
+}
+
+function logout() {
+    localStorage.clear();
+    window.location.href = '/login.html';
+}
 
 function dibujarEstaciones() {
     const container = document.getElementById('estacionesCardsContainer');
     const userData = JSON.parse(localStorage.getItem('usuario'));
-    
-    // 1. Seguridad básica
     if (!container || !userData) return;
 
-    // 2. Usamos directamente estacionesData (que ya viene filtrada de cargarEstaciones)
-    // No volvemos a filtrar aquí para evitar conflictos de ID vs Nombre.
     const filtradas = estacionesData || [];
 
-    // 3. Validación de visualización
     if (filtradas.length === 0) {
         container.innerHTML = `
             <div class="col-span-full p-20 text-center bg-white rounded-[3rem] border-2 border-dashed border-slate-100">
@@ -873,14 +942,10 @@ function dibujarEstaciones() {
         return;
     }
 
-    // 4. DISEÑO ORIGINAL CON MAPEO ROBUSTO
     container.innerHTML = filtradas.map(est => {
-        // Mapeo inteligente de campos (Soporta nombre, NOMBRE, id, ID)
         const idReal = est.id || est.ID || est._id || 'S/N';
         const nombreReal = est.nombre || est.NOMBRE || 'Estación sin nombre';
         const direccionReal = est.direccion || est.DIRECCIÓN || '';
-
-        // Manejo seguro de objetos anidados (Capacidades, Inventarios)
         const cap = est.capacidad || est.CAPACIDAD || { extra: 0, supreme: 0, diesel: 0 };
         const vol = est.volumenActual || est.VOLUMEN || { extra: 0, supreme: 0, diesel: 0 };
         const vta = est.ventaPromedio || est.VENTA || { extra: 0, supreme: 0, diesel: 0 };
@@ -912,67 +977,37 @@ function dibujarEstaciones() {
     }).join('');
 }
 
-    function renderFuelCard(label, color, cap, vol, vta) {
-        const capacidad = Number(cap || 0).toLocaleString();
-        const volumen = Number(vol || 0).toLocaleString();
-        const venta = Number(vta || 0).toLocaleString();
-        return `
-            <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100">
-                <p class="text-${color}-600 font-black text-center text-xs mb-4 uppercase tracking-widest border-b border-${color}-100 pb-2">${label}</p>
-                <div class="grid grid-cols-2 gap-2 mb-4 text-center">
-                    <div><p class="text-[8px] font-black text-slate-400 uppercase">Capacidad</p><p class="text-xs font-bold text-slate-700">${capacidad} L</p></div>
-                    <div><p class="text-[8px] font-black text-slate-400 uppercase">Vta Prom.</p><p class="text-xs font-bold text-slate-700">${venta} L</p></div>
-                </div>
-                <div class="bg-white p-4 rounded-xl text-center shadow-sm">
-                    <p class="text-[8px] font-black text-slate-400 uppercase mb-1">Volumen Actual</p>
-                    <p class="text-2xl font-black text-slate-900">${volumen} L</p>
-                </div>
-            </div>`;
-    }
+function renderFuelCard(label, color, cap, vol, vta) {
+    const capacidad = Number(cap || 0).toLocaleString();
+    const volumen = Number(vol || 0).toLocaleString();
+    const venta = Number(vta || 0).toLocaleString();
+    return `
+        <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100">
+            <p class="text-${color}-600 font-black text-center text-xs mb-4 uppercase tracking-widest border-b border-${color}-100 pb-2">${label}</p>
+            <div class="grid grid-cols-2 gap-2 mb-4 text-center">
+                <div><p class="text-[8px] font-black text-slate-400 uppercase">Capacidad</p><p class="text-xs font-bold text-slate-700">${capacidad} L</p></div>
+                <div><p class="text-[8px] font-black text-slate-400 uppercase">Vta Prom.</p><p class="text-xs font-bold text-slate-700">${venta} L</p></div>
+            </div>
+            <div class="bg-white p-4 rounded-xl text-center shadow-sm">
+                <p class="text-[8px] font-black text-slate-400 uppercase mb-1">Volumen Actual</p>
+                <p class="text-2xl font-black text-slate-900">${volumen} L</p>
+            </div>
+        </div>`;
+}
 
-    // --- OPERADORES Y UNIDADES ---
-    function irOperadores() {
-        ocultarTodasLasVistas();
-        const v = document.getElementById('vistaOperadores');
-        if(v) v.classList.remove('hidden');
-    }
+function filtrarPedidos(estatus) {
+    const botones = document.querySelectorAll('.filter-btn');
+    botones.forEach(btn => {
+        btn.classList.remove('bg-slate-900', 'text-white', 'active');
+        btn.classList.add('bg-white', 'text-slate-400', 'border-slate-100');
+    });
 
-    function irUnidades() {
-        ocultarTodasLasVistas();
-        const v = document.getElementById('vistaUnidades');
-        if(v) v.classList.remove('hidden');
-    }
-
-    function ocultarTodasLasVistas() {
-        ['dashboardView', 'estacionesView', 'pedidosView', 'vistaOperadores', 'vistaUnidades'].forEach(id => {
-            const el = document.getElementById(id);
-            if(el) el.classList.add('hidden');
-        });
-    }
-
-    function irMisPedidos() {
-        ocultarTodasLasVistas();
-        const pedView = document.getElementById('pedidosView');
-        if(pedView) {
-            pedView.classList.remove('hidden');
-            renderizarPedidosLista('Todos');
-        }
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function filtrarPedidos(estatus) {
-        const botones = document.querySelectorAll('.filter-btn');
-        botones.forEach(btn => {
-            btn.classList.remove('bg-slate-900', 'text-white', 'active');
-            btn.classList.add('bg-white', 'text-slate-400', 'border-slate-100');
-        });
-
-        const btnActivo = event.currentTarget;
-        btnActivo.classList.remove('bg-white', 'text-slate-400');
-        btnActivo.classList.add('bg-slate-900', 'text-white', 'active');
-        
-        renderizarPedidosLista(estatus);
-    }
+    const btnActivo = event.currentTarget;
+    btnActivo.classList.remove('bg-white', 'text-slate-400');
+    btnActivo.classList.add('bg-slate-900', 'text-white', 'active');
+    
+    renderizarPedidosLista(estatus);
+}
 
 // Funciones de apoyo para el tiempo
 // --- CORRECCIÓN DE FUNCIONES DE APOYO ---
