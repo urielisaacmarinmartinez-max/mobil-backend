@@ -59,50 +59,42 @@ async function sincronizarHojasAMongo() {
     try {
         const count = await Pedido.countDocuments();
         if (count === 0) {
-            console.log('🔄 Iniciando migración completa de Google Sheets a MongoDB...');
+            console.log('🔄 MongoDB vacío. Iniciando migración integral...');
             await doc.loadInfo();
             const sheet = doc.sheetsByTitle['Pedidos'];
             const rows = await sheet.getRows();
             
-            // Obtenemos los encabezados reales de la hoja para no omitir ninguna columna
+            // Esto detecta automáticamente TODAS tus columnas (FOLIO, FECHA, PLACA 1, OPERADOR, etc.)
             const headers = sheet.headerValues;
 
             const data = rows.map(r => {
-                const rowData = {};
-
-                // 1. MAPEADO DINÁMICO: Captura cada columna del Excel (Mayúsculas, espacios, etc.)
-                headers.forEach(header => {
-                    rowData[header] = r.get(header);
+                const rowObj = {};
+                
+                // 1. MAPEADO AUTOMÁTICO: Captura cada columna del Excel sin excepciones
+                headers.forEach(h => {
+                    rowObj[h] = r.get(h);
                 });
 
-                // 2. COMPATIBILIDAD: Creamos "alias" en minúsculas para los filtros del Dashboard
-                // Esto evita que se rompan las funciones que ya tienes programadas
-                rowData.folio = r.get('FOLIO');
-                rowData.estacion = r.get('ESTACIÓN');
-                rowData.producto = r.get('TIPO DE PRODUCTO');
-                rowData.litros = Number(r.get('LITROS')) || 0;
-                rowData.estatus = r.get('ESTATUS') || 'Pendiente';
-                rowData.bloque = r.get('BLOQUE DE PROGRAMACIÓN');
-                rowData.fletera = r.get('FLETERA');
-                rowData.unidad = r.get('UNIDAD');
-                rowData.total = r.get('TOTAL');
-
-                return rowData;
+                // 2. COMPATIBILIDAD: Creamos "alias" en minúsculas para que tus filtros actuales no se rompan
+                rowObj.folio = r.get('FOLIO');
+                rowObj.estacion = r.get('ESTACIÓN');
+                rowObj.estatus = r.get('ESTATUS') || 'Pendiente';
+                rowObj.bloque = r.get('BLOQUE DE PROGRAMACIÓN');
+                rowObj.fletera = r.get('FLETERA');
+                rowObj.unidad = r.get('UNIDAD');
+                
+                return rowObj;
             });
 
             if (data.length > 0) {
-                // Insertamos todos los pedidos con su estructura completa
                 await Pedido.insertMany(data);
-                console.log(`✅ Migración exitosa: ${data.length} pedidos sincronizados con todos los campos (Placas, Operador, ETA, etc.).`);
+                console.log(`✅ ¡Sincronización completa! ${data.length} pedidos guardados con todas sus columnas.`);
             }
-        } else {
-            console.log(`ℹ️ La base de datos ya contiene ${count} pedidos. No es necesaria la migración inicial.`);
         }
-    } catch (e) { 
-        console.error("❌ Error en sincronización:", e); 
+    } catch (e) {
+        console.error("❌ Error en la sincronización:", e);
     }
 }
-
 // 1. LOGIN
 app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
@@ -281,4 +273,5 @@ app.post('/api/confirmar-bloque', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 10000;
+
 app.listen(PORT, () => console.log(`🚀 Servidor Híbrido Activo en puerto ${PORT}`));
