@@ -1412,7 +1412,7 @@ async function verDetallePedido(id) {
     document.getElementById('det_estacion').textContent = "Cargando...";
 
     try {
-        const response = await fetch(`/api/obtener-pedido-detallado?id=${id}`);
+        const response = await fetch(`/api/obtener-pedido?id=${id}`);
         const p = await response.json();
 
         // 1. MAPEADO DE SEGURIDAD (Mismo que en la lista para consistencia)
