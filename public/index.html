@@ -827,6 +827,9 @@ async function cargarPedidosDashboard() {
 // ... (aquí terminan tus funciones de irDashboard o logout)
 
 
+    // Variable global para controlar la evidencia (Añadida)
+    let ticketCargado = false;
+
     // LÓGICA PARA EL MODAL DE TIRILLAS
     function abrirModalTirilla(id, nombre) {
         console.log("Abriendo modal para:", id);
@@ -840,18 +843,59 @@ async function cargarPedidosDashboard() {
             document.getElementById('volSupreme').value = est.vol_supreme ?? est.VOL_SUPREME ?? '';
             document.getElementById('volDiesel').value = est.vol_diesel ?? est.VOL_DIESEL ?? '';
         }
+
+        // Reset de la validación del ticket al abrir
+        ticketCargado = false;
+        const statusText = document.getElementById('ticket-status');
+        if(statusText) statusText.innerHTML = '<span class="font-semibold">Click para subir ticket</span> o arrastra la foto';
+        
+        const btnGuardar = document.querySelector('#tirillaForm button[type="submit"]');
+        if(btnGuardar) {
+            btnGuardar.disabled = true;
+            btnGuardar.classList.add('opacity-50', 'cursor-not-allowed');
+        }
         
         document.getElementById('modalTirilla').classList.remove('hidden');
+    }
+
+    // FUNCIÓN PARA VALIDAR EL ARCHIVO (Añadida)
+    window.validarTicket = function(input) {
+        const statusText = document.getElementById('ticket-status');
+        const btnGuardar = document.querySelector('#tirillaForm button[type="submit"]');
+
+        if (input.files && input.files[0]) {
+            ticketCargado = true;
+            statusText.innerHTML = `<span class="text-green-600 font-bold">✅ Ticket listo: ${input.files[0].name}</span>`;
+            
+            if(btnGuardar) {
+                btnGuardar.disabled = false;
+                btnGuardar.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        } else {
+            ticketCargado = false;
+            if(btnGuardar) {
+                btnGuardar.disabled = true;
+                btnGuardar.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
     }
 
     function cerrarModalTirilla() {
         document.getElementById('modalTirilla').classList.add('hidden');
         document.getElementById('tirillaForm').reset();
+        ticketCargado = false; // Reset de seguridad
     }
 
     // ÚNICO CONTROLADOR PARA EL FORMULARIO DE TIRILLA
     document.getElementById('tirillaForm').onsubmit = async (e) => {
         e.preventDefault();
+
+        // Validación extra de seguridad (Añadida)
+        if (!ticketCargado) {
+            alert("⚠️ Es obligatorio subir la evidencia (Ticket) antes de guardar.");
+            return;
+        }
+
         const btn = e.target.querySelector('button[type="submit"]');
         const idEstacion = document.getElementById('modalEstacionId').value;
         const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbx6HlP_KKN_PjuWWHdhCMlvhKLnSFRqd_gZblZWnJjq9Q0pz7od6TA9KnevNowAcwY/exec';
@@ -868,16 +912,15 @@ async function cargarPedidosDashboard() {
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
 
         try {
-            
             await fetch(URL_APPS_SCRIPT, {
                 method: 'POST',
+                // Usamos no-cors porque Apps Script suele dar problemas de CORS aunque guarde los datos
                 mode: 'no-cors', 
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(datos)
             });
 
-            
-            alert('¡Inventario enviado correctamente!');
+            alert('¡Inventario y evidencia enviados correctamente!');
             cerrarModalTirilla();
             
             if (typeof sincronizar === 'function') {
@@ -896,25 +939,20 @@ async function cargarPedidosDashboard() {
     };
 
     // ==========================================
-// 1. SISTEMA DE NAVEGACIÓN (VISUAL)
-// ==========================================
-
-function actualizarEstiloNavegacion(idActivo) {
-    // Seleccionamos todos los elementos con la clase nav-item
-    const botones = document.querySelectorAll('.nav-item');
-    
-    botones.forEach(btn => {
-        // Si el ID coincide con el que queremos activar
-        if (btn.id === idActivo) {
-            btn.classList.add('active-link');
-            btn.classList.remove('text-slate-400');
-        } else {
-            // Quitamos la clase de resaltado a los demás
-            btn.classList.remove('active-link');
-            btn.classList.add('text-slate-400');
-        }
-    });
-}
+    // 1. SISTEMA DE NAVEGACIÓN (VISUAL)
+    // ==========================================
+    function actualizarEstiloNavegacion(idActivo) {
+        const botones = document.querySelectorAll('.nav-item');
+        botones.forEach(btn => {
+            if (btn.id === idActivo) {
+                btn.classList.add('active-link');
+                btn.classList.remove('text-slate-400');
+            } else {
+                btn.classList.remove('active-link');
+                btn.classList.add('text-slate-400');
+            }
+        });
+    }
 
 function ocultarTodasLasVistas() {
     // Array con todos los IDs de las vistas de tu aplicación
@@ -1782,5 +1820,6 @@ window.onload = initDashboard;
 </body>
 
 </html>
+
 
 
